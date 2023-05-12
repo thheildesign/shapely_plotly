@@ -1,4 +1,14 @@
-from .shapely_plotly import (
+from .style import (
     Style,
-    rgb
+    rgb,
+    default_style,
+    DEFAULT,
+
+    resolve_info
 )
+
+# We need to run this, but import nothing.
+from .plot import (plot_lines3d)
+
+del plot_lines3d
+del resolve_info
