@@ -89,8 +89,6 @@ default_style = Style(
     point_style={"color":default_color, "size":3, "symbol":"circle"}
 )
 
-all_defaults_style = Style()
-
 
 def rgb(r, g, b, a=1.0):
     if a == 1.0:
@@ -491,6 +489,7 @@ def plot_polygon3d(sh_polygon, data, style=DEFAULT, name=DEFAULT):
 
     return
 
+sh.Polygon.plotly_draw3d = plot_polygon3d
 
 def plot_polygon2d(sh_polygon, data, style=DEFAULT, name=DEFAULT):
 
@@ -570,7 +569,7 @@ def plot_multiline3d(sh_multiline, data, style=DEFAULT, name=DEFAULT):
 
         index += n
 
-    plot_lines3d(sh_multiline, xs, ys, zs, data, style, as_hole=False)
+    plot_lines3d(sh_multiline, xs, ys, zs, data, style, name, as_hole=False)
     return
 
 
