@@ -1,7 +1,3 @@
-import os
-
-print ("\n".join(os.environ["PYTHONPATH"].split(":")))
-
 import shapely_plotly
 import plotly.graph_objects as graph
 

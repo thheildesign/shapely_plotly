@@ -1,12 +1,8 @@
 from __future__ import annotations
-from weakref import WeakKeyDictionary
-
 import shapely as sh
 import plotly.graph_objects as graph
 
 from shapely_plotly import DEFAULT, resolve_info
-
-g3d = graph.scatter3d
 
 # shapely Point
 def plot_point3d(sh_point, data, style=DEFAULT, name=DEFAULT):
