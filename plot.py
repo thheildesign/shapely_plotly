@@ -165,6 +165,10 @@ def plot_lines3d(geom, xs, ys, zs, data, style, name, as_hole):
     """
     Internal function.  Get style for lines and plot them, 3D.
     """
+    if len(xs) == 0:
+        # Empty line
+        return
+
     mode, line_style, marker_style, name, show_legend = plot_lines_style_info(geom, style, name, as_hole)
 
     scat = graph.Scatter3d(x=xs, y=ys, z=zs,
@@ -180,6 +184,10 @@ def plot_lines2d(geom, xs, ys, data, style, name, as_hole):
     """
     Internal function.  Get style for lines and plot them, 2D.
     """
+    if len(xs) == 0:
+        # Empty line
+        return
+
     mode, line_style, marker_style, name, show_legend = plot_lines_style_info(geom, style, name, as_hole)
 
     scat = graph.Scatter(x=xs, y=ys,
@@ -354,12 +362,20 @@ def plot_multiline3d(sh_multiline, data, style=DEFAULT, name=DEFAULT):
     zs = [None] * num_point
 
     index = 0
+    first_line = True
     for il, l in enumerate(sh_multiline.geoms):
         coords = l.coords
         n = len(coords)
-        assert (n > 0)  # FIXME: Not handling this case yet.
+        if n == 0:
+            # Empty Line.  Yes, Shapely allows this.
+            # In this case we have reserved space for a separater that we do not need.
+            # We will correct length of xs,ys,zs at the end.
+            # Meanwhile, just skip.
+            continue
 
-        if il > 0:
+        if first_line:
+            first_line = False
+        else:
             # Not the first line.  Add break between line strings.
             xs[index], ys[index], zs[index] = (None, None, None)
             index += 1
@@ -372,6 +388,17 @@ def plot_multiline3d(sh_multiline, data, style=DEFAULT, name=DEFAULT):
             zs[index:index + n] = 0.0
 
         index += n
+
+    if index < num_point:
+        # This can happen if there were empty lines in the list.
+        if index == 0:
+            # All empty!
+            return
+
+        # Discard the remaining unused points.
+        del xs[index:]
+        del ys[index:]
+        del zs[index:]
 
     plot_lines3d(sh_multiline, xs, ys, zs, data, style, name, as_hole=False)
     return
@@ -404,11 +431,20 @@ def plot_multiline2d(sh_multiline, data, style=DEFAULT, name=DEFAULT):
     ys = [None] * num_point
 
     index = 0
+    first_line = True
     for il, l in enumerate(sh_multiline.geoms):
         n = len(l.coords)
-        assert (n > 0)  # FIXME: Not handling this case yet.
 
-        if il > 0:
+        if n == 0:
+            # Empty Line.  Yes, Shapely allows this.
+            # In this case we have reserved space for a separater that we do not need.
+            # We will correct length of xs,ys,zs at the end.
+            # Meanwhile, just skip.
+            continue
+
+        if first_line:
+            first_line = False
+        else:
             # Not the first line.  Add break between line strings.
             xs[index], ys[index] = (None, None)
             index += 1
@@ -416,6 +452,16 @@ def plot_multiline2d(sh_multiline, data, style=DEFAULT, name=DEFAULT):
         xs[index:index + n], ys[index:index + n] = l.xy
 
         index += n
+
+    if index < num_point:
+        # This can happen if there were empty lines in the list.
+        if index == 0:
+            # All empty!
+            return
+
+        # Discard the remaining unused points.
+        del xs[index:]
+        del ys[index:]
 
     plot_lines2d(sh_multiline, xs, ys, data, style, name, as_hole=False)
     return
