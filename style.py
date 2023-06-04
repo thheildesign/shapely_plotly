@@ -77,12 +77,10 @@ class Style:
         :param hole_line_style:  This line style is used for internal holes/voids inside a polygon.
         :param hole_line_point_style: This marker style is used for the vertices for holes/voids inside a polygon.
 
-        The hole_*_style applies only to 3D plotting.  2D plotting uses filling.
-
+        :param fill_color: This is the fill color used when drawing 2D polygons.  It is a plotly string color name.
+        
         :param point_style: This marker style is used for Point/MultiPoint objects.
         """
-
-        # FIXME: No fill style for Polygons.
 
         if parent is DEFAULT:
             self.parent = default_style
