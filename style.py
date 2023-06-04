@@ -34,6 +34,7 @@ class Style:
        "size":   Number.  Size of marker in points.
        "symbol": String identifying symbol to use for the marker 
                  E.g 'circle', 'circle-open', 'cross', 'diamond', 'diamond-open', 'square', 'square-open', 'x'
+                 See https://plotly.com/python/marker-style/ for details.
 
     Many other keywords are available.  See the Plotly documentation for details.
 
@@ -81,7 +82,6 @@ class Style:
         """
 
         # FIXME: No fill style for Polygons.
-        # FIXME: Honor hole styles for 2D plotting.
 
         if parent is DEFAULT:
             self.parent = default_style

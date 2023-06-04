@@ -10,7 +10,7 @@ import shapely as sh
 import plotly.graph_objects as graph
 
 from shapely_plotly import DEFAULT, resolve_info
-
+import random as rnd
 
 # ------------------------------------------------------------------------
 # Plotting functions
@@ -300,13 +300,43 @@ def plot_polygon2d(sh_polygon, data, style=DEFAULT, name=DEFAULT):
     ext_ccw = ext.is_ccw
     tot_c = ext_n
     num_i = len(sh_polygon.interiors)
-    if num_i > 0:
+    has_interiors = num_i > 0
+    if has_interiors:
         # We need coordinates for each internal hole
         # Plus a None separate to skip to it without drawing a border
         tot_c += sum(len(ixt.coords) for ixt in sh_polygon.interiors) + num_i
 
+        # Note on interior holes and styles.
+        # We have to plot the poly as a single scatter plot to get the filling right.
+        # However, we have to change marker/line styles because the holes have a different style from the
+        # outside line.  plotly doesn't support changing line/marker styles in the middle of a
+        # scatter plot (in very easy/general ways).
+        # So, what we do is we do one scatter plot for the fill, without markers or lines.
+        # Then we do two more scatter plots, one for the outside line/markers and one for the hole line/markers.
+        # Finally, we tie all three together using a randomly generated legend group (which we statistically
+        # expect is not used by the user anyplace else).
+        if show_legend:
+            legend_group = "shapely_plotly_" + str(rnd.randrange(0, 1<<64))
+        else:
+            legend_group = None
+
+        # Hole styles
+        h_mode, h_line_style, h_marker_style, _, _ = plot_lines_style_info(sh_polygon, style, name, as_hole=True)
+
+        # Save exterior styles for exterior plot.
+        e_mode, e_line_style = mode, line_style
+
+        # Substitue empty line plot for the main plot.
+        mode = "lines"
+        line_style = {"color":"rgba(0,0,0,0)", "width":0}  # Invisible lines for fill plot.
+    else:
+        legend_group = None
+
+    # List of x/y coords.
     xs = [None] * tot_c
     ys = [None] * tot_c
+
+    # For the outer shell
     xs[0:ext_n], ys[0:ext_n] = ext.xy
 
     index = ext_n
@@ -325,13 +355,34 @@ def plot_polygon2d(sh_polygon, data, style=DEFAULT, name=DEFAULT):
 
         index += n
 
+    # Plot with fill
     scat = graph.Scatter(x=xs, y=ys,
                          line=line_style,
                          marker=marker_style,
-                         name=name, showlegend=show_legend,
+                         name=name, legendgroup=legend_group, showlegend=show_legend,
                          mode=mode, fill="toself")
-
     data.append(scat)
+
+    if has_interiors:
+        # Plot exterior lines and markers.
+        scat = graph.Scatter(x=xs[0:ext_n], y=ys[0:ext_n],
+                      line=e_line_style,
+                      marker=marker_style,
+                      name=name, showlegend=False, legendgroup=legend_group,
+                      mode=e_mode
+                      )
+        data.append(scat)
+
+        # Plot holes lines and markers.
+        scat = graph.Scatter(x=xs[ext_n+1:], y=ys[ext_n+1:],
+                      line=h_line_style,
+                      marker=h_marker_style,
+                      name=name, showlegend=False, legendgroup=legend_group,
+                      mode=h_mode
+                      )
+        data.append(scat)
+
+    return data
 
 
 sh.Polygon.plotly_draw2d = plot_polygon2d

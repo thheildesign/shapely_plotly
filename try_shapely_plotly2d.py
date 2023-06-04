@@ -1,4 +1,5 @@
 import shapely_plotly
+rgb = shapely_plotly.rgb
 import plotly.graph_objects as graph
 
 import shapely as sh
@@ -12,13 +13,13 @@ for i, p in enumerate(points):
     grey = rnd.randrange(0, 170)
     p.plotly_draw2d(data,
                     style=shapely_plotly.Style(
-                        point_style={"color": shapely_plotly.rgb(grey, grey, grey), "symbol": "diamond", "size": 5}
+                        point_style={"color": rgb(grey, grey, grey), "symbol": "diamond", "size": 5}
                     )
                     )
 
 points = [(rnd.random() + 2, rnd.random()) for i in range(10)]
 l = sh.LineString(points)
-l.plotly_set_line_style(line_style={"color": shapely_plotly.rgb(20, 20, 200), "width":8})
+l.plotly_set_line_style(line_style={"color": rgb(20, 20, 200), "width":8})
 l.plotly_set_name("Line String 1")
 l.plotly_set_line_point_style({"color":"rgb(255,0,0)"})
 l.plotly_draw2d(data)
@@ -33,6 +34,7 @@ shp = [(4.0, 0.0), (6.0, 0.0), (6.0, 2.0), (4.0, 2.0), (4.0, 0.0)]
 hop = [(4.5, 0.5), (5.5, 0.5), (5.5, 1.0), (4.5, 1.0), (4.5, 0.5)]
 p = sh.Polygon(shell=shp, holes=[hop])
 p.plotly_set_name("Polygon")
+p.plotly_set_hole_line_style({"color":rgb(255,0,0), "width":4})
 p.plotly_draw2d(data)
 
 points = [(rnd.random(), rnd.random() + 3, rnd.random()) for i in range(20)]
