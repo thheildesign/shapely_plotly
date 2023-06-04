@@ -60,7 +60,8 @@ class Style:
                  hole_line_style=DEFAULT,
                  hole_line_point_style=DEFAULT,
                  fill_color=DEFAULT,
-                 point_style=DEFAULT
+                 point_style=DEFAULT,
+                 scatter_kwargs=DEFAULT,
                  ):
         """
         Construct a style.
@@ -78,7 +79,7 @@ class Style:
         :param hole_line_point_style: This marker style is used for the vertices for holes/voids inside a polygon.
 
         :param fill_color: This is the fill color used when drawing 2D polygons.  It is a plotly string color name.
-        
+
         :param point_style: This marker style is used for Point/MultiPoint objects.
         """
 
@@ -90,6 +91,7 @@ class Style:
         self._hole_line_point_style = hole_line_point_style
         self._fill_color=fill_color
         self._point_style = point_style
+        self._scatter_kwargs = scatter_kwargs
         return
 
     # Style accessors.  If component is DEFAULT, get from parent, recursively.
@@ -156,6 +158,17 @@ class Style:
     def point_style(self, v):
         self._point_style = v
 
+    #
+    @property
+    def scatter_kwargs(self):
+        if self._scatter_kwargs is DEFAULT:
+            return self.parent.scatter_kwargs
+        return self._scatter_kwargs
+
+    @scatter_kwargs.setter
+    def scatter_kwargs(self, v):
+        self._scatter_kwargs = v
+
 # Default style definition.  Boring but pleasant green, except Polygon holes are red.  No markers except for points.
 
 default_color = "rgb(0,180, 0)"
@@ -169,7 +182,8 @@ default_style = Style(
     hole_line_style={"color": default_hole_color, "width": 1},
     hole_line_point_style=None,
     fill_color=default_fill_color,
-    point_style={"color": default_color, "size": 3, "symbol": "circle"}
+    point_style={"color": default_color, "size": 3, "symbol": "circle"},
+    scatter_kwargs={}
 )
 
 
@@ -330,6 +344,22 @@ def geom_set_point_style(geom, point_style):
     return
 
 
+def geom_set_scatter_kwargs(geom, scatter_kwargs):
+    """
+    Set the style for a geometry
+    Note, this will change the point style for all objects using that style.
+
+    :param geom:  Shapely object.
+    :param scatter_kwargs: New point marker style.
+    """
+    info = geom_get_info(geom)
+    if info.style is DEFAULT:
+        info.style = Style()
+
+    info.style._scatter_kwargs = scatter_kwargs
+    return
+
+
 def geom_set_name(geom, name: str):
     """
     Set the name of a geometry.  The name will show up in the plot legend, and also on object tool tips.
@@ -373,6 +403,7 @@ for cl in [sh.Point, sh.Polygon, sh.LineString, sh.LinearRing, sh.MultiPoint,
     cl.plotly_set_hole_line_point_style = geom_set_hole_line_point_style
     cl.plotly_set_fill_color = geom_set_fill_color
     cl.plotly_set_point_style = geom_set_point_style
+    cl.plotly_set_scatter_kwargs = geom_set_scatter_kwargs
     cl.plotly_get_name = geom_get_name
     cl.plotly_get_style = geom_get_style
 

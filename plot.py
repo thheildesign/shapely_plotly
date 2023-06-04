@@ -40,7 +40,8 @@ def plot_point3d(sh_point, data, style=DEFAULT, name=DEFAULT):
     scat = graph.Scatter3d(x=[sh_point.x], y=[sh_point.y], z=[z],
                            marker=style.point_style,
                            name=name, showlegend=show_legend,
-                           mode="markers")
+                           mode="markers",
+                           **style.scatter_kwargs)
 
     data.append(scat)
     return
@@ -66,7 +67,8 @@ def plot_point2d(sh_point, data, style=DEFAULT, name=DEFAULT):
     scat = graph.Scatter(x=[sh_point.x], y=[sh_point.y],
                          marker=style.point_style,
                          name=name, showlegend=show_legend,
-                         mode="markers")
+                         mode="markers",
+                         **style.scatter_kwargs)
 
     data.append(scat)
     return
@@ -97,7 +99,8 @@ def plot_multipoint3d(sh_multipoint, data, style=DEFAULT, name=DEFAULT):
     scat = graph.Scatter3d(x=xs, y=ys, z=zs,
                            marker=style.point_style,
                            name=name, showlegend=show_legend,
-                           mode="markers")
+                           mode="markers",
+                           **style.scatter_kwargs)
     data.append(scat)
     return
 
@@ -125,7 +128,8 @@ def plot_multipoint2d(sh_multipoint, data, style=DEFAULT, name=DEFAULT):
     scat = graph.Scatter(x=xs, y=ys,
                          marker=style.point_style,
                          name=name, showlegend=show_legend,
-                         mode="markers")
+                         mode="markers",
+                         **style.scatter_kwargs)
     data.append(scat)
     return
 
@@ -137,6 +141,8 @@ def plot_lines_style_info(geom, style, name, as_hole):
     """
     Internal function.  Get the line style info for a geometry object, based on
     parameters passed into a draw command, and style/name set for the object.
+
+    Returns: mode, line_style, marker_style, name, show_legend, Style object
     """
     style, name, show_legend = resolve_info(geom, style, name)
 
@@ -158,7 +164,7 @@ def plot_lines_style_info(geom, style, name, as_hole):
         else:
             mode = "lines+markers"
 
-    return mode, line_style, marker_style, name, show_legend
+    return mode, line_style, marker_style, name, show_legend, style
 
 
 def plot_lines3d(geom, xs, ys, zs, data, style, name, as_hole):
@@ -169,13 +175,14 @@ def plot_lines3d(geom, xs, ys, zs, data, style, name, as_hole):
         # Empty line
         return
 
-    mode, line_style, marker_style, name, show_legend = plot_lines_style_info(geom, style, name, as_hole)
+    mode, line_style, marker_style, name, show_legend, style = plot_lines_style_info(geom, style, name, as_hole)
 
     scat = graph.Scatter3d(x=xs, y=ys, z=zs,
                            line=line_style,
                            marker=marker_style,
                            name=name, showlegend=show_legend,
-                           mode=mode)
+                           mode=mode,
+                           **style.scatter_kwargs)
     data.append(scat)
     return
 
@@ -188,13 +195,14 @@ def plot_lines2d(geom, xs, ys, data, style, name, as_hole):
         # Empty line
         return
 
-    mode, line_style, marker_style, name, show_legend = plot_lines_style_info(geom, style, name, as_hole)
+    mode, line_style, marker_style, name, show_legend, style = plot_lines_style_info(geom, style, name, as_hole)
 
     scat = graph.Scatter(x=xs, y=ys,
                          line=line_style,
                          marker=marker_style,
                          name=name, showlegend=show_legend,
-                         mode=mode)
+                         mode=mode,
+                         **style.scatter_kwargs)
     data.append(scat)
     return
 
@@ -293,7 +301,8 @@ def plot_polygon2d(sh_polygon, data, style=DEFAULT, name=DEFAULT):
     :param name:   Name for the object in Plotly plot.  Overrides any name defined for the sh_polygon.
     """
 
-    mode, line_style, marker_style, name, show_legend = plot_lines_style_info(sh_polygon, style, name, as_hole=False)
+    mode, line_style, marker_style, name, show_legend, style = \
+        plot_lines_style_info(sh_polygon, style, name, as_hole=False)
 
     ext = sh_polygon.exterior
     ext_n = len(ext.coords)
@@ -321,7 +330,7 @@ def plot_polygon2d(sh_polygon, data, style=DEFAULT, name=DEFAULT):
             legend_group = None
 
         # Hole styles
-        h_mode, h_line_style, h_marker_style, _, _ = plot_lines_style_info(sh_polygon, style, name, as_hole=True)
+        h_mode, h_line_style, h_marker_style, _, _, _ = plot_lines_style_info(sh_polygon, style, name, as_hole=True)
 
         # Save exterior styles for exterior plot.
         e_mode, e_line_style = mode, line_style
@@ -355,35 +364,37 @@ def plot_polygon2d(sh_polygon, data, style=DEFAULT, name=DEFAULT):
 
         index += n
 
-    style_info, _, _ = resolve_info(sh_polygon, style, name)
-
-    fill_color = style_info.fill_color
+    fill_color = style.fill_color
     # Plot with fill
     scat = graph.Scatter(x=xs, y=ys,
                          line=line_style,
                          marker=marker_style,
                          fillcolor=fill_color,
                          name=name, legendgroup=legend_group, showlegend=show_legend,
-                         mode=mode, fill="toself")
+                         mode=mode, fill="toself",
+                         **style.scatter_kwargs)
+
     data.append(scat)
 
     if has_interiors:
         # Plot exterior lines and markers.
         scat = graph.Scatter(x=xs[0:ext_n], y=ys[0:ext_n],
-                      line=e_line_style,
-                      marker=marker_style,
-                      name=name, showlegend=False, legendgroup=legend_group,
-                      mode=e_mode
-                      )
+                             line=e_line_style,
+                             marker=marker_style,
+                             name=name, showlegend=False, legendgroup=legend_group,
+                             mode=e_mode,
+                             **style.scatter_kwargs
+                            )
         data.append(scat)
 
         # Plot holes lines and markers.
         scat = graph.Scatter(x=xs[ext_n+1:], y=ys[ext_n+1:],
-                      line=h_line_style,
-                      marker=h_marker_style,
-                      name=name, showlegend=False, legendgroup=legend_group,
-                      mode=h_mode
-                      )
+                             line=h_line_style,
+                             marker=h_marker_style,
+                             name=name, showlegend=False, legendgroup=legend_group,
+                             mode=h_mode,
+                             **style.scatter_kwargs
+                            )
         data.append(scat)
 
     return data

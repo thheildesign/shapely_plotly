@@ -14,7 +14,8 @@ for i, p in enumerate(points):
     grey = rnd.randrange(0, 170)
     p.plotly_draw2d(data,
                     style=shapely_plotly.Style(
-                        point_style={"color": rgb(grey, grey, grey), "symbol": "diamond", "size": 5}
+                        point_style={"color": rgb(grey, grey, grey), "symbol": "diamond", "size": 5},
+                        scatter_kwargs={"hovertext":f"Custom hover text for Point[{i}]"}
                     )
                     )
 
