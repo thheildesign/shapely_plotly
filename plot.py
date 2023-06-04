@@ -355,10 +355,14 @@ def plot_polygon2d(sh_polygon, data, style=DEFAULT, name=DEFAULT):
 
         index += n
 
+    style_info, _, _ = resolve_info(sh_polygon, style, name)
+
+    fill_color = style_info.fill_color
     # Plot with fill
     scat = graph.Scatter(x=xs, y=ys,
                          line=line_style,
                          marker=marker_style,
+                         fillcolor=fill_color,
                          name=name, legendgroup=legend_group, showlegend=show_legend,
                          mode=mode, fill="toself")
     data.append(scat)

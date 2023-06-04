@@ -59,6 +59,7 @@ class Style:
                  line_point_style=DEFAULT,
                  hole_line_style=DEFAULT,
                  hole_line_point_style=DEFAULT,
+                 fill_color=DEFAULT,
                  point_style=DEFAULT
                  ):
         """
@@ -89,6 +90,7 @@ class Style:
         self._line_point_style = line_point_style
         self._hole_line_style = hole_line_style
         self._hole_line_point_style = hole_line_point_style
+        self._fill_color=fill_color
         self._point_style = point_style
         return
 
@@ -136,6 +138,17 @@ class Style:
         self._hole_line_point_style = v
 
     @property
+    def fill_color(self):
+        if self._fill_color is DEFAULT:
+            return self.parent.fill_color
+        return self._fill_color
+
+    @fill_color.setter
+    def fill_color(self, v):
+        self._fill_color = v
+
+    #
+    @property
     def point_style(self):
         if self._point_style is DEFAULT:
             return self.parent.point_style
@@ -148,6 +161,7 @@ class Style:
 # Default style definition.  Boring but pleasant green, except Polygon holes are red.  No markers except for points.
 
 default_color = "rgb(0,180, 0)"
+default_fill_color = "rgba(0,220, 0, 0.3)"
 default_hole_color = "rgb(150, 0, 0)"
 
 default_style = Style(
@@ -156,6 +170,7 @@ default_style = Style(
     line_point_style=None,
     hole_line_style={"color": default_hole_color, "width": 1},
     hole_line_point_style=None,
+    fill_color=default_fill_color,
     point_style={"color": default_color, "size": 3, "symbol": "circle"}
 )
 
@@ -165,13 +180,13 @@ def rgb(r, g, b, a=1.0):
     Convenience function.  Get a Plotly color string for R,G,B values, with optional alpha.
 
     :param r, g, b: Red, Green, Blue components.  Integer 0 to 255.
-    :param a: Alpha component.  Float 0.0 to 1.0
+    :param a: Alpha component.  Float 0.0 to 1.0.  0.0 is invisible.  1.0 (default) is opaque.
     """
 
     if a == 1.0:
         return f'rgb({r},{g},{b})'
 
-    return f'rgba({r},{g}<{b},{a})'
+    return f'rgba({r},{g},{b},{a})'
 
 
 class GeometryInfo:
@@ -286,6 +301,21 @@ def geom_set_hole_line_point_style(geom, hole_line_point_style):
     return
 
 
+def geom_set_fill_color(geom, fill_color):
+    """
+    Set the style for a geometry
+    Note, this will change the point style for all objects using that style.
+
+    :param geom:  Shapely object.
+    :param fill_color: New point marker style.
+    """
+    info = geom_get_info(geom)
+    if info.style is DEFAULT:
+        info.style = Style()
+
+    info.style._fill_color = fill_color
+    return
+
 def geom_set_point_style(geom, point_style):
     """
     Set the style for a geometry
@@ -343,6 +373,7 @@ for cl in [sh.Point, sh.Polygon, sh.LineString, sh.LinearRing, sh.MultiPoint,
     cl.plotly_set_line_point_style = geom_set_line_point_style
     cl.plotly_set_hole_line_style = geom_set_hole_line_style
     cl.plotly_set_hole_line_point_style = geom_set_hole_line_point_style
+    cl.plotly_set_fill_color = geom_set_fill_color
     cl.plotly_set_point_style = geom_set_point_style
     cl.plotly_get_name = geom_get_name
     cl.plotly_get_style = geom_get_style
