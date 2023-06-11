@@ -37,6 +37,7 @@ hop = [(4.5, 0.5), (5.5, 0.5), (5.5, 1.0), (4.5, 1.0), (4.5, 0.5)]
 p = sh.Polygon(shell=shp, holes=[hop])
 p.plotly_set_name("Polygon")
 p.plotly_set_hole_line_style({"color": rgb(255, 0, 0), "width": 4})
+p.plotly_set_fill_color(None)
 p.plotly_draw2d(data)
 
 points = [(rnd.random(), rnd.random() + 3, rnd.random()) for i in range(20)]
@@ -62,6 +63,7 @@ for i in range(5):
     points.append(points[0])
     p = sh.Polygon(shell=points)
     p.plotly_set_fill_color(rgb(255, 255, 0, 0.5))
+    # p.plotly_set_fill_color(None)
     polys.append(p)
 
 mpoly = sh.MultiPolygon(polys)

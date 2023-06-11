@@ -55,7 +55,6 @@ for i in range(5):
 mpoly = sh.MultiPolygon(polys)
 mpoly.plotly_draw3d(data)
 
-fig = graph.Figure(data=data)
-fig.show()
+shapely_plotly.show3d(data)
 
 print("Done")

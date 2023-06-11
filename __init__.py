@@ -18,7 +18,7 @@ The following shapely geometry objects may be plotted.
    Polygon
 
 """
-__version__ = "0.1.0"
+__version__ = "0.3.0"
 
 from .style import (
     Style,
@@ -29,8 +29,9 @@ from .style import (
     resolve_info  # Internal only.
 )
 
-# We need to run this, but import nothing.
-from .plot import (plot_lines3d)
+from .plot import (
+    show2d,
+    show3d
+)
 
-del plot_lines3d
 del resolve_info

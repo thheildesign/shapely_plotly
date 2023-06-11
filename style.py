@@ -61,6 +61,7 @@ class Style:
                  hole_line_point_style=DEFAULT,
                  fill_color=DEFAULT,
                  point_style=DEFAULT,
+                 legend_group=DEFAULT,
                  scatter_kwargs=DEFAULT,
                  ):
         """
@@ -72,15 +73,21 @@ class Style:
 
         :param line_style: The style used for lines.  This used for LineString, LinearRing, and Polygon exterior
                            line segments.  It is also used for ny collection containing those elements.
+                           None means no lines.
         :param line_point_style: Marker style used for the ends/vertices of lines.  This applies to the same geometries
                            as line_style.
+                           None means no markers.
 
         :param hole_line_style:  This line style is used for internal holes/voids inside a polygon.
+                           None means no lines.
         :param hole_line_point_style: This marker style is used for the vertices for holes/voids inside a polygon.
+                           None means no markers.
 
         :param fill_color: This is the fill color used when drawing 2D polygons.  It is a plotly string color name.
+                           None means no fill.
 
         :param point_style: This marker style is used for Point/MultiPoint objects.
+                           None will cause an assertion.
         """
 
         if parent is DEFAULT:
@@ -91,6 +98,7 @@ class Style:
         self._hole_line_point_style = hole_line_point_style
         self._fill_color=fill_color
         self._point_style = point_style
+        self._legend_group=legend_group
         self._scatter_kwargs = scatter_kwargs
         return
 
@@ -147,7 +155,6 @@ class Style:
     def fill_color(self, v):
         self._fill_color = v
 
-    #
     @property
     def point_style(self):
         if self._point_style is DEFAULT:
@@ -159,6 +166,16 @@ class Style:
         self._point_style = v
 
     #
+    @property
+    def legend_group(self):
+        if self._legend_group is DEFAULT:
+            return self.parent.legend_group
+        return self._legend_group
+
+    @legend_group.setter
+    def legend_group(self, v):
+        self._legend_group = v
+
     @property
     def scatter_kwargs(self):
         if self._scatter_kwargs is DEFAULT:
@@ -183,6 +200,7 @@ default_style = Style(
     hole_line_point_style=None,
     fill_color=default_fill_color,
     point_style={"color": default_color, "size": 3, "symbol": "circle"},
+    legend_group=None,
     scatter_kwargs={}
 )
 
@@ -344,6 +362,21 @@ def geom_set_point_style(geom, point_style):
     return
 
 
+def geom_set_legend_group(geom, legend_group):
+    """
+    Set the style for a geometry
+    Note, this will change the point style for all objects using that style.
+
+    :param geom:  Shapely object.
+    :param legend_group: New point marker style.
+    """
+    info = geom_get_info(geom)
+    if info.style is DEFAULT:
+        info.style = Style()
+
+    info.style._legend_group = legend_group
+    return
+
 def geom_set_scatter_kwargs(geom, scatter_kwargs):
     """
     Set the style for a geometry
@@ -403,6 +436,7 @@ for cl in [sh.Point, sh.Polygon, sh.LineString, sh.LinearRing, sh.MultiPoint,
     cl.plotly_set_hole_line_point_style = geom_set_hole_line_point_style
     cl.plotly_set_fill_color = geom_set_fill_color
     cl.plotly_set_point_style = geom_set_point_style
+    cl.plotly_set_legend_group = geom_set_legend_group
     cl.plotly_set_scatter_kwargs = geom_set_scatter_kwargs
     cl.plotly_get_name = geom_get_name
     cl.plotly_get_style = geom_get_style
@@ -413,7 +447,7 @@ default_info = GeometryInfo()
 default_info.style = default_style
 
 
-def resolve_info(geom, style, name):
+def resolve_info(geom, style, name, legend_group):
     """
     Determine the style to use for a particular draw command.
     This will be the passed in style, if not DEFAULT.
@@ -445,6 +479,9 @@ def resolve_info(geom, style, name):
         else:
             style = info.style
 
+    if legend_group is DEFAULT:
+        legend_group = style.legend_group
+
     # Resolve name:
     #  1) Value passed in
     #  2) Info value (defaults to None)
@@ -453,6 +490,6 @@ def resolve_info(geom, style, name):
 
     if name is None:
         # Plot empty name, do not show in legend.
-        return style, "", False
+        return style, "", False, legend_group
 
-    return style, name, True
+    return style, name, True, legend_group
