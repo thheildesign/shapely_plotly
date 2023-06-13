@@ -196,10 +196,10 @@ def __i_plot_lines_style_info(geom, style, name, legend_group, as_hole):
 
     if as_hole:
         line_style = style.hole_line_style
-        marker_style = style.hole_line_point_style
+        marker_style = style.hole_vertex_style
     else:
         line_style = style.line_style
-        marker_style = style.line_point_style
+        marker_style = style.vertex_style
 
     if line_style is None:
         if marker_style is None:

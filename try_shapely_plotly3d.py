@@ -23,7 +23,7 @@ l.plotly_draw3d(data)
 
 points = [(rnd.random() + 2, rnd.random() + 2, rnd.random() * 0.1 + 1) for i in range(3)]
 l = sh.LinearRing(points)
-l.plotly_set_line_point_style({"color":"rgb(255,255,0)", "symbol":"cross", "size":5})
+l.plotly_set_vertex_style({"color":"rgb(255,255,0)", "symbol":"cross", "size":5})
 l.plotly_draw3d(data)
 
 shp = [(4.0, 0.0), (6.0, 0.0), (6.0, 2.0), (4.0, 2.0), (4.0, 0.0)]

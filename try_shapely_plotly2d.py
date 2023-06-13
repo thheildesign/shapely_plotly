@@ -23,12 +23,12 @@ points = [(rnd.random() + 2, rnd.random()) for i in range(10)]
 l = sh.LineString(points)
 l.plotly_set_line_style(line_style={"color": rgb(20, 20, 200), "width": 8})
 l.plotly_set_name("Line String 1")
-l.plotly_set_line_point_style({"color": "rgb(255,0,0)"})
+l.plotly_set_vertex_style({"color": "rgb(255,0,0)"})
 l.plotly_draw2d(data)
 
 points = [(rnd.random() + 2, rnd.random() + 2, rnd.random() * 0.1 + 1) for i in range(3)]
 l = sh.LinearRing(points)
-l.plotly_set_line_point_style({"color": "rgb(255,255,0)", "symbol": "cross", "size": 5})
+l.plotly_set_vertex_style({"color": "rgb(255,255,0)", "symbol": "cross", "size": 5})
 l.plotly_set_name("Line Ring")
 l.plotly_draw2d(data)
 

@@ -53,12 +53,13 @@ class Style:
     is to set up styles once at beginning, and then use those styles throughout the code.
 
     """
+
     def __init__(self,
                  parent: Style = DEFAULT,
                  line_style=DEFAULT,
-                 line_point_style=DEFAULT,
+                 vertex_style=DEFAULT,
                  hole_line_style=DEFAULT,
-                 hole_line_point_style=DEFAULT,
+                 hole_vertex_style=DEFAULT,
                  fill_color=DEFAULT,
                  point_style=DEFAULT,
                  legend_group=DEFAULT,
@@ -72,15 +73,15 @@ class Style:
         Style components.  All components default to DEFAULT.  Any DEFAULT component is taken from the parent.
 
         :param line_style: The style used for lines.  This used for LineString, LinearRing, and Polygon exterior
-                           line segments.  It is also used for ny collection containing those elements.
+                           line segments.  It is also used for any collection containing those elements.
                            None means no lines.
-        :param line_point_style: Marker style used for the ends/vertices of lines.  This applies to the same geometries
+        :param vertex_style: Marker style used for the ends/vertices of lines.  This applies to the same geometries
                            as line_style.
                            None means no markers.
 
         :param hole_line_style:  This line style is used for internal holes/voids inside a polygon.
                            None means no lines.
-        :param hole_line_point_style: This marker style is used for the vertices for holes/voids inside a polygon.
+        :param hole_vertex_style: This marker style is used for the vertices for holes/voids inside a polygon.
                            None means no markers.
 
         :param fill_color: This is the fill color used when drawing 2D polygons.  It is a plotly string color name.
@@ -88,17 +89,26 @@ class Style:
 
         :param point_style: This marker style is used for Point/MultiPoint objects.
                            None will cause an assertion.
+
+        :param legend_group:  A string name for a legend group.  All geometries in the same legend group will
+                              be shown/hidden together in the Plotly interface.
+
+        :param scatter_kwargs:  Arbitrary keyword arguments passed to the Plotly Scatter(...) plot, using Python's
+                                **kwargs facility.  Note, do not set keyword args set by the base style parameters.
+                                This will pass the same keyword argument twice, resulting in a Python error.
+                                These keywords arguments are passed verbatim to the Scatter(...) and are not
+                                examined by shapely_plotly.
         """
 
         if parent is DEFAULT:
             self.parent = default_style
         self._line_style = line_style
-        self._line_point_style = line_point_style
+        self._vertex_style = vertex_style
         self._hole_line_style = hole_line_style
-        self._hole_line_point_style = hole_line_point_style
-        self._fill_color=fill_color
+        self._hole_vertex_style = hole_vertex_style
+        self._fill_color = fill_color
         self._point_style = point_style
-        self._legend_group=legend_group
+        self._legend_group = legend_group
         self._scatter_kwargs = scatter_kwargs
         return
 
@@ -116,14 +126,14 @@ class Style:
         self._line_style = v
 
     @property
-    def line_point_style(self):
-        if self._line_point_style is DEFAULT:
-            return self.parent.line_point_style
-        return self._line_point_style
+    def vertex_style(self):
+        if self._vertex_style is DEFAULT:
+            return self.parent.vertex_style
+        return self._vertex_style
 
-    @line_point_style.setter
-    def line_point_style(self, v):
-        self._line_point_style = v
+    @vertex_style.setter
+    def vertex_style(self, v):
+        self._vertex_style = v
 
     @property
     def hole_line_style(self):
@@ -136,14 +146,14 @@ class Style:
         self._hole_line_style = v
 
     @property
-    def hole_line_point_style(self):
-        if self._hole_line_point_style is DEFAULT:
-            return self.parent.hole_line_point_style
-        return self._hole_line_point_style
+    def hole_vertex_style(self):
+        if self._hole_vertex_style is DEFAULT:
+            return self.parent.hole_vertex_style
+        return self._hole_vertex_style
 
-    @hole_line_point_style.setter
-    def hole_line_point_style(self, v):
-        self._hole_line_point_style = v
+    @hole_vertex_style.setter
+    def hole_vertex_style(self, v):
+        self._hole_vertex_style = v
 
     @property
     def fill_color(self):
@@ -186,6 +196,7 @@ class Style:
     def scatter_kwargs(self, v):
         self._scatter_kwargs = v
 
+
 # Default style definition.  Boring but pleasant green, except Polygon holes are red.  No markers except for points.
 
 default_color = "rgb(0,180, 0)"
@@ -195,9 +206,9 @@ default_hole_color = "rgb(150, 0, 0)"
 default_style = Style(
     parent=None,
     line_style={"color": default_color, "width": 1},
-    line_point_style=None,
+    vertex_style=None,
     hole_line_style={"color": default_hole_color, "width": 1},
-    hole_line_point_style=None,
+    hole_vertex_style=None,
     fill_color=default_fill_color,
     point_style={"color": default_color, "size": 3, "symbol": "circle"},
     legend_group=None,
@@ -283,19 +294,19 @@ def geom_set_line_style(geom, line_style):
     return
 
 
-def geom_set_line_point_style(geom, line_point_style):
+def geom_set_vertex_style(geom, vertex_style):
     """
     Set the line end/vertex style for a geometry
     Note, this will change the line style for all objects using that style.
 
     :param geom:  Shapely object.
-    :param line_point_style: New line marker style.
+    :param vertex_style: New line marker style.
     """
     info = geom_get_info(geom)
     if info.style is DEFAULT:
         info.style = Style()
 
-    info.style._line_point_style = line_point_style
+    info.style._vertex_style = vertex_style
     return
 
 
@@ -315,19 +326,19 @@ def geom_set_hole_line_style(geom, hole_line_style):
     return
 
 
-def geom_set_hole_line_point_style(geom, hole_line_point_style):
+def geom_set_hole_vertex_style(geom, hole_vertex_style):
     """
     Set the hole vertex style for a Polygon holes.
     Note, this will change the hole vertex style for all objects using that style.
 
     :param geom:  Shapely object.
-    :param hole_line_point_style: New marker style.
+    :param hole_vertex_style: New marker style.
     """
     info = geom_get_info(geom)
     if info.style is DEFAULT:
         info.style = Style()
 
-    info.style._hole_line_point_style = hole_line_point_style
+    info.style._hole_vertex_style = hole_vertex_style
     return
 
 
@@ -345,6 +356,7 @@ def geom_set_fill_color(geom, fill_color):
 
     info.style._fill_color = fill_color
     return
+
 
 def geom_set_point_style(geom, point_style):
     """
@@ -376,6 +388,7 @@ def geom_set_legend_group(geom, legend_group):
 
     info.style._legend_group = legend_group
     return
+
 
 def geom_set_scatter_kwargs(geom, scatter_kwargs):
     """
@@ -431,16 +444,15 @@ for cl in [sh.Point, sh.Polygon, sh.LineString, sh.LinearRing, sh.MultiPoint,
     cl.plotly_set_name = geom_set_name
     cl.plotly_set_style = geom_set_style
     cl.plotly_set_line_style = geom_set_line_style
-    cl.plotly_set_line_point_style = geom_set_line_point_style
+    cl.plotly_set_vertex_style = geom_set_vertex_style
     cl.plotly_set_hole_line_style = geom_set_hole_line_style
-    cl.plotly_set_hole_line_point_style = geom_set_hole_line_point_style
+    cl.plotly_set_hole_vertex_style = geom_set_hole_vertex_style
     cl.plotly_set_fill_color = geom_set_fill_color
     cl.plotly_set_point_style = geom_set_point_style
     cl.plotly_set_legend_group = geom_set_legend_group
     cl.plotly_set_scatter_kwargs = geom_set_scatter_kwargs
     cl.plotly_get_name = geom_get_name
     cl.plotly_get_style = geom_get_style
-
 
 # Default geometry object metadata.
 default_info = GeometryInfo()
