@@ -204,7 +204,7 @@ def __i_plot_lines_style_info(geom, style, name, legend_group, as_hole):
     if line_style is None:
         if marker_style is None:
             # Invisible
-            mode=None
+            mode = None
         else:
             mode = "markers"
     else:
@@ -216,7 +216,7 @@ def __i_plot_lines_style_info(geom, style, name, legend_group, as_hole):
     return mode, line_style, marker_style, name, show_legend, legend_group, style
 
 
-def __i_plot_lines3d(geom, xs, ys, zs, data, style, name, legend_group, as_hole):
+def __i_plot_lines3d(geom, xs, ys, zs, data, style, name, show_legend, legend_group, as_hole):
     """
     Internal function.  Get style for lines and plot them, 3D.
     """
@@ -224,9 +224,12 @@ def __i_plot_lines3d(geom, xs, ys, zs, data, style, name, legend_group, as_hole)
         # Empty line
         return
 
-    mode, line_style, marker_style, name, show_legend, legend_group, style = \
+    mode, line_style, marker_style, name, n_show_legend, legend_group, style = \
         __i_plot_lines_style_info(geom, style, name, legend_group, as_hole)
 
+    # The show legend parameter above will force the legend entry off.
+    # Only show a legend if both that flag and the style and the name say it should be shown.
+    show_legend = show_legend and n_show_legend
     if mode is None:
         # Invisible
         return
@@ -266,8 +269,8 @@ def __i_plot_lines2d(geom, xs, ys, data, style, name, legend_group, as_hole):
     return
 
 
-# shapely LineString
-def plot_line_string3d(sh_line_string, data, style=DEFAULT, name=DEFAULT, legend_group=DEFAULT, as_hole=False):
+def plot_line_string3d(sh_line_string, data, style=DEFAULT,
+                       name=DEFAULT, show_legend=True, legend_group=DEFAULT):
     """
     Plot line String/Ring - 3D.
 
@@ -277,6 +280,13 @@ def plot_line_string3d(sh_line_string, data, style=DEFAULT, name=DEFAULT, legend
     :param name:   Name for the object in Plotly plot.  Overrides any name defined for the sh_line_string.
     :param legend_group   Legend group to use (groups multiple items under a single legend).  Overrides style.
     """
+    __i_plot_line_string3d(sh_line_string, data, style,
+                           name, True, legend_group, as_hole=False)
+
+
+# shapely LineString
+def __i_plot_line_string3d(sh_line_string, data, style,
+                           name, show_legend, legend_group, as_hole):
     coords = sh_line_string.coords
     n = len(coords)
     xs = [None] * n
@@ -293,7 +303,7 @@ def plot_line_string3d(sh_line_string, data, style=DEFAULT, name=DEFAULT, legend
             xs[i] = c[0]
             ys[i] = c[1]
 
-    __i_plot_lines3d(sh_line_string, xs, ys, zs, data, style, name, legend_group, as_hole)
+    __i_plot_lines3d(sh_line_string, xs, ys, zs, data, style, name, show_legend, legend_group, as_hole)
     return
 
 
@@ -350,11 +360,13 @@ def plot_polygon3d(sh_polygon, data, style=DEFAULT, name=DEFAULT, legend_group=D
             legend_group = unique_legend_group()
 
     # Plot the exterior hull
-    plot_line_string3d(sh_polygon.exterior, data, style, name, legend_group)
+    # FIXME: Misformed polygons?  Empty polygons?  Empty exterior with holes?
+    __i_plot_line_string3d(sh_polygon.exterior, data, style, name, True, legend_group, False)
 
-    # Plot the interior holes
+    # Plot the interior holes.  No name on these so no legend entry.
+    # FIXME: Tool tips not right, because no name.  Need explicit show-legend to this call.
     for interior in sh_polygon.interiors:
-        plot_line_string3d(interior, data, style, name, legend_group, as_hole=True)
+        __i_plot_line_string3d(interior, data, style, name, False, legend_group, True)
 
     return
 
@@ -455,7 +467,7 @@ def plot_polygon2d(sh_polygon, data, style=DEFAULT, name=DEFAULT, legend_group=D
                              line=line_style,
                              marker=marker_style,
                              fillcolor=style.fill_color,
-                             name=name, showlegend=show_legend,legendgroup=legend_group,
+                             name=name, showlegend=show_legend, legendgroup=legend_group,
                              mode=mode, fill="toself",
                              **style.scatter_kwargs)
 
@@ -567,7 +579,7 @@ def plot_multiline3d(sh_multiline, data, style=DEFAULT, name=DEFAULT, legend_gro
         del ys[index:]
         del zs[index:]
 
-    __i_plot_lines3d(sh_multiline, xs, ys, zs, data, style, name, legend_group, as_hole=False)
+    __i_plot_lines3d(sh_multiline, xs, ys, zs, data, style, name, True, legend_group, as_hole=False)
     return
 
 
@@ -751,4 +763,3 @@ def show3d(data, show=True):
         fig.show()
 
     return fig
-

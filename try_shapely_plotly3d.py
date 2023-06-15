@@ -29,11 +29,12 @@ l.plotly_draw3d(data)
 shp = [(4.0, 0.0), (6.0, 0.0), (6.0, 2.0), (4.0, 2.0), (4.0, 0.0)]
 hop = [(4.5, 0.5), (5.5, 0.5), (5.5, 1.0), (4.5, 1.0), (4.5, 0.5)]
 p = sh.Polygon(shell=shp, holes=[hop])
-p.plotly_draw3d(data)
+p.plotly_draw3d(data, name="Polygon with hole")
 
 points = [(rnd.random(), rnd.random() + 3, rnd.random()) for i in range(20)]
 m = sh.MultiPoint(points)
 m.plotly_draw3d(data)
+
 
 points = [(rnd.random() * 0.5, rnd.random() * 0.5, [0.2, 0.2, 0.2, 1.0][i]) for i in range(4)]
 

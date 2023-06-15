@@ -11,6 +11,8 @@ import shapely as sh
 DEFAULT = ["DEFAULT"]
 
 
+# FIXME: Explicit show legend flag or possibly naming convention so we can get tool tips correct.
+
 class Style:
     """
     A cascading style defintion for plotting.
@@ -500,8 +502,5 @@ def resolve_info(geom, style, name, legend_group):
     if name is DEFAULT:
         name = info.name
 
-    if name is None:
-        # Plot empty name, do not show in legend.
-        return style, "", False, legend_group
-
-    return style, name, True, legend_group
+    show_legend = name is not None
+    return style, name, show_legend, legend_group
