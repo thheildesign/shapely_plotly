@@ -68,8 +68,11 @@ def normalize_line_style(line_style):
     """
     d = {}
 
-    for field in ["dash", "color", "width"]:
+    for field in ["color", "width"]:
         d[field] = getattr(line_style, field)
+
+    if hasattr(line_style, "dash"):
+        d["dash"] = line_style.dash
 
     return d
 
@@ -107,6 +110,7 @@ def rnd_style(with_fill):
 
     s.line_style, s.vertex_style, s.fill_color = rnd_style_elements(with_fill)
     s.hole_line_style, s.hole_vertex_style, _ = rnd_style_elements(False)
+    s.point_style = rnd_marker_style()
     u = rnd.uniform(0.0, 1.0)
     if u < 0.2:
         s.legend_group = None

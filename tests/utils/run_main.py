@@ -2,6 +2,7 @@ import sys
 import re
 import argparse
 
+# FIXME: Add regression test documentation.
 
 class TDef:
     def __init__(self, f, has_id=False, has_show=False):
@@ -40,7 +41,7 @@ Defined tests are:"""
     parser.add_argument("-s", "--show", default=False, action="store_true",
                         help="Show the results of any geometries built during the test.")
 
-    parser.add_argument("-n", "--test_num", default=[], action="append",
+    parser.add_argument("-n", "--test_num", type=int, default=[], action="append",
                         help="For random tests, which random seeds to run. "
                              "Can be given twice to define a beginning and (exclusive) end.")
 

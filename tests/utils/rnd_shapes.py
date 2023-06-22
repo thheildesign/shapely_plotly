@@ -4,28 +4,30 @@ import shapely as shp
 from shapely_plotly.tests.utils.utils import rnd_style
 import shapely_plotly as shpl
 
+
 def rnd_coord(xoff, yoff, width=1.0, height=None):
     if height is None:
         height = width
 
-    l = rnd.randrange(10, 20)
-    x = rnd.randrange(xoff, xoff+width)
-    y = rnd.randrange(yoff, yoff + height)
+    x = rnd.uniform(xoff, xoff + width)
+    y = rnd.uniform(yoff, yoff + height)
 
     return x, y
+
 
 def rnd_coords(xoff, yoff, width=1.0, height=None):
     if height is None:
         height = width
 
     l = rnd.randrange(10, 20)
-    x = [rnd.randrange(xoff, xoff+width) for i in range(l)]
-    y = [rnd.randrange(yoff, yoff + height) for i in range(l)]
+    x = [rnd.uniform(xoff, xoff + width) for i in range(l)]
+    y = [rnd.uniform(yoff, yoff + height) for i in range(l)]
 
     return x, y
 
+
 def zip_xy(x, y):
-    z = list(zip(x,y))
+    z = list(zip(x, y))
     return z
 
 
@@ -33,8 +35,8 @@ def rnd_rect_coords(xoff, yoff, max_width=1.0, max_height=None):
     if max_height is None:
         max_height = max_width
 
-    width = rnd.randrange(max_width*0.5, max_width)
-    height = rnd.randrange(max_height*0.5, max_height)
+    width = rnd.randrange(max_width * 0.5, max_width)
+    height = rnd.randrange(max_height * 0.5, max_height)
 
     x0 = xoff
     x1 = xoff + width
@@ -43,22 +45,21 @@ def rnd_rect_coords(xoff, yoff, max_width=1.0, max_height=None):
     x = [x0, x0, x1, x1]
     y = [y0, y1, y1, y0]
 
-    x,y = complete_poly_coords(x, y)
+    x, y = complete_poly_coords(x, y)
 
-    return x,y
+    return x, y
 
 
 def rand_poly_coords(xoff, yoff, max_width=1.0, max_height=None):
-
     l = rnd.randrange(3, 20)
 
     while True:
-        angles = [rnd.uniform(0, 2*pi) for i in range(l)]
+        angles = [rnd.uniform(0, 2 * pi) for i in range(l)]
         angles.sort()
 
         fail = False
-        for i in range(0, len(angles)-1):
-            if angles[i]==angles[i+1]:
+        for i in range(0, len(angles) - 1):
+            if angles[i] == angles[i + 1]:
                 fail = True
                 break
         if not fail:
@@ -71,21 +72,21 @@ def rand_poly_coords(xoff, yoff, max_width=1.0, max_height=None):
         dx = cos(a)
         dy = sin(a)
         if abs(dx) > abs(dy):
-            scale = 1.0/dx
+            scale = 1.0 / dx
         else:
-            scale = 1.0/dy
+            scale = 1.0 / dy
 
-        x = dx*scale
-        y = dy*scale
+        x = dx * scale
+        y = dy * scale
 
-        x = (x+1.0)*0.5*max_width + xoff
-        y = (y+1.0)*0.5+max_height + yoff
+        x = (x + 1.0) * 0.5 * max_width + xoff
+        y = (y + 1.0) * 0.5 + max_height + yoff
         xs.append(x)
         ys.append(y)
 
     xs, yx = complete_poly_coords(xs, ys)
 
-    return xs,ys
+    return xs, ys
 
 
 def complete_poly_coords(x, y):
@@ -112,19 +113,24 @@ def complete_poly_coords(x, y):
     return x, y
 
 
-def rnd_shapely_point2d(xoff, yoff, width=1.0, height=None):
-    x,y = rnd_coord(xoff, yoff, width, height)
+def rnd_shapely_point2d(expect_data, xoff, yoff, width=1.0, height=None):
+    x, y = rnd_coord(xoff, yoff, width, height)
     p = shp.Point(x, y)
+    expect_data["dims"] = "2d"
+    expect_data["x"] = (x,)
+    expect_data["y"] = (y,)
+    expect_data["mode"] = "markers"
     return p
 
 
 def rnd_point_plot2d(plot_data, xoff, yoff, width=1.0, height=None):
-    p = rnd_shapely_point2d(xoff, yoff, width, height)
-    rnd_plot2d(p, plot_data, False)
-    return
+    expect_data = {}
+    p = rnd_shapely_point2d(expect_data, xoff, yoff, width, height)
+    rnd_plot2d(p, expect_data, plot_data, False)
+    return expect_data
 
 
-def rnd_plot2d(geom, plot_data, with_fill):
+def rnd_plot2d(geom, expect_data, plot_data, with_fill):
     """
     Randomly plot-2D a geometry object, applying a random style in one of four ways.
 
@@ -140,22 +146,92 @@ def rnd_plot2d(geom, plot_data, with_fill):
     # o) An ignored style set a head of time, overlaid by the actual style at call time.
     method = rnd.choice("acno")
 
-    if method=="a":
+    if method == "a":
         s = rnd_style(with_fill)
-        geom.set_style(s)
+        geom.plotly_set_style(s)
         draw_style = shpl.DEFAULT
         final_style = s
-    elif method=="c":
+    elif method == "c":
         draw_style = rnd_style(with_fill)
         final_style = draw_style
-    elif method=="n":
+    elif method == "n":
         draw_style = shpl.DEFAULT
         final_style = shpl.default_style
-    elif method=="o":
+    elif method == "o":
         s = rnd_style(with_fill)
-        geom.set_style(s)
+        geom.plotly_set_style(s)
         draw_style = rnd_style(with_fill)
         final_style = draw_style
 
     geom.plotly_draw2d(plot_data, style=draw_style)
-    return final_style
+
+    add_normalized_style_info(expect_data, final_style, "point")
+    return
+
+# Functions to grab 1) Line style, 2) marker style, 3) fill color
+style_usage = {
+    "point": (lambda s:None, lambda s:s.point_style, lambda s:None)
+}
+def add_normalized_style_info(expect_data, style, style_mode):
+
+
+    line_style, marker_style, fill_color = (f(style) for f in style_usage[style_mode])
+
+    expect_data["fillcolor"] = fill_color
+    if fill_color is None:
+        expect_data["fill"] = None
+    else:
+        expect_data["fill"] = "toself"
+
+    scatter_kwargs = style.scatter_kwargs
+    if scatter_kwargs is None:
+        expect_data["hovertext"] = None
+    else:
+        expect_data["hovertext"] = scatter_kwargs.get("hovertext", None)
+
+    if "mode" in expect_data:
+        mode = expect_data["mode"]
+        has_lines = "lines" in mode
+        has_markers = "markers" in mode
+    else:
+        has_lines = True
+        has_markers = True
+
+    if (line_style is not None) and (has_lines):
+        expect_data["line"] = {
+            "dash": None,  # FIXME
+            "color": line_style["color"],
+            "widht": line_style["width"]
+        }
+    else:
+        expect_data["line"] = {'color': None, 'width': None, 'dash': None}
+
+    if (marker_style is not None) and (has_markers):
+        expect_data["marker"] = {
+            "color": marker_style["color"],
+            "size": marker_style["size"],
+            "symbol": marker_style["symbol"],
+            "line": {"color": None, "width": None}
+        }
+    else:
+        expect_data["marker"] = None  # FIXME
+
+    # FIXME: TBD
+    expect_data["legendgroup"] = style.legend_group
+    expect_data["name"] = None
+    expect_data["showlegend"] = False
+
+    if "mode" not in expect_data:
+        has_line = line_style is not None
+        has_markers = marker_style is not None
+        if has_line:
+            if has_markers:
+                mode = "lines+markers"
+            else:
+                mode = "lines"
+        else:
+            if has_markers:
+                mode = "markers"
+            else:
+                assert False, "Style should have lines or markers"
+        expect_data["mode"] = mode
