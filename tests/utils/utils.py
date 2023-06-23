@@ -216,3 +216,72 @@ def check_style(s):
 rnd.seed(1)
 for i in range(1000):
     s = rnd_style(rnd.randrange(2))
+
+compare_type_code = {
+    int: "p",
+    float: "p",
+    bool: "p",
+    type(None): "p",
+    str: "p",
+    list: "l",
+    tuple: "l",
+    dict: "d"
+}
+
+
+def compare_object(a_name, a, b_name, b, title):
+    if a == b:  # Fast quick compare.  Common case.
+        return
+
+    at, bt = type(a), type(b)
+    if at != bt:
+        assert False, f'{title}: Type of {a_name}={at} differs from {b_name}={bt}'
+
+    tc = compare_type_code[at]  # B must be the same.
+    if tc == "p":
+        assert False, f'{title}: {a_name}={repr(a)} differs from {b_name}={repr(b)}'
+
+    if tc == "l":
+        compare_list(a_name, a, b_name, b, title)
+
+    elif tc == "d":
+        compare_dict(a_name, a, b_name, b, title)
+
+    assert False, f'{title}: Internal error comparing {a_name} and {b_name}.  Could not detect differences.'
+    return
+
+
+def compare_list(a_name, a, b_name, b, title):
+    if len(a) != len(b):
+        assert False, f'{title}: Lengths of {a_name}={len(a)} and {b_name}={len(b)} differ.'
+
+    for i in range(len(a)):
+        new_a_name = f'{a_name}[{i}]'
+        new_b_name = f'{b_name}[{i}]'
+        compare_object(new_a_name, a[i], new_b_name, b[i], title)
+
+    return
+
+
+def compare_dict(a_name, a, b_name, b, title):
+    if len(b) > len(a):
+        # B is larger.  Look for B keys not in A
+        for k in b.keys():
+            if k not in a:
+                assert False, f'{title}: Key {repr(k)} in {b_name} but not in {a_name}'
+        assert False, "Should not reach here"
+    else:
+        # A is larger or equal.  Look for A keys not in B
+        for k in a.keys():
+            if k not in b:
+                assert False, f'{title}: Key {repr(k)} in {a_name} but not in {b_name}'
+
+    # Keys match.  Check all values.
+    
+    for k in a.keys():
+        kr = f'[{repr(k)}]'
+        new_a_name = a_name + kr
+        new_b_name = b_name + kr
+        compare_object(new_a_name, a[k], new_b_name, b[k], title)
+
+    return

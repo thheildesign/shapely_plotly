@@ -119,23 +119,40 @@ def rnd_shapely_point2d(expect_data, xoff, yoff, width=1.0, height=None):
     expect_data["dims"] = "2d"
     expect_data["x"] = (x,)
     expect_data["y"] = (y,)
-    expect_data["mode"] = "markers"
     return p
 
 
 def rnd_point_plot2d(plot_data, xoff, yoff, width=1.0, height=None):
     expect_data = {}
     p = rnd_shapely_point2d(expect_data, xoff, yoff, width, height)
-    rnd_plot2d(p, expect_data, plot_data, False)
+    rnd_plot2d(p, expect_data, plot_data, "point")
     return expect_data
 
 
-def rnd_plot2d(geom, expect_data, plot_data, with_fill):
+def rnd_shapely_multipoint2d(expect_data, xoff, yoff, width=1.0, height=None):
+    x, y = rnd_coords(xoff, yoff, width, height)
+    p = shp.MultiPoint(zip_xy(x, y))
+    expect_data["dims"] = "2d"
+    expect_data["x"] = tuple(x)
+    expect_data["y"] = tuple(y)
+    return p
+
+
+def rnd_multipoint_plot2d(plot_data, xoff, yoff, width=1.0, height=None):
+    expect_data = {}
+    p = rnd_shapely_multipoint2d(expect_data, xoff, yoff, width, height)
+    rnd_plot2d(p, expect_data, plot_data, "point")
+    return expect_data
+
+
+def rnd_plot2d(geom, expect_data, plot_data, style_mode):
     """
     Randomly plot-2D a geometry object, applying a random style in one of four ways.
 
     with_fill - Whether the geometry needs a fill color.
     """
+
+    with_fill = style_usage[style_mode][3]
 
     s = rnd_style(with_fill)
 
@@ -165,17 +182,18 @@ def rnd_plot2d(geom, expect_data, plot_data, with_fill):
 
     geom.plotly_draw2d(plot_data, style=draw_style)
 
-    add_normalized_style_info(expect_data, final_style, "point")
+    add_normalized_style_info(expect_data, final_style, style_mode)
     return
 
-# Functions to grab 1) Line style, 2) marker style, 3) fill color
+
+# Functions to grab 0) Line style, 1) marker style, 2) fill color, 3) with_fill
 style_usage = {
-    "point": (lambda s:None, lambda s:s.point_style, lambda s:None)
+    "point": (lambda s: None, lambda s: s.point_style, lambda s: None, False)
 }
+
+
 def add_normalized_style_info(expect_data, style, style_mode):
-
-
-    line_style, marker_style, fill_color = (f(style) for f in style_usage[style_mode])
+    line_style, marker_style, fill_color = (f(style) for f in style_usage[style_mode][0:3])
 
     expect_data["fillcolor"] = fill_color
     if fill_color is None:
