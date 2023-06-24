@@ -16,7 +16,7 @@ See [example1.py](example1.py) for the complete code.
 ### 1) Import shapely_plotly and shapely
 
 ```
-import shapely_plotly as sh2p
+import shapely_plotly as sh2pl
 import shapely as shp
 ```
 

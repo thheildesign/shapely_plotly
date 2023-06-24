@@ -2,6 +2,7 @@ import sys
 import re
 import argparse
 
+
 # FIXME: Add regression test documentation.
 
 class TDef:
@@ -59,14 +60,18 @@ Defined tests are:"""
 
     test_res = [re.compile(tail_arg) for tail_arg in tail_args]
 
-    for test in test_list:
-        for test_re in test_res:
+    for test_re in test_res:
+        num_found = 0
+        for test in test_list:
             if test_re.fullmatch(test.name) is not None:
                 print("Running Test " + test.name + "\n")
                 # Run test!
                 test.run(args)
                 print()
+                num_found += 1
                 break
+        if num_found == 0:
+            print("\nTest {repr(test_re)} not found.")
 
     return
 

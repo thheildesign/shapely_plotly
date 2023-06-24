@@ -145,6 +145,72 @@ def rnd_multipoint_plot2d(plot_data, xoff, yoff, width=1.0, height=None):
     return expect_data
 
 
+def rnd_shapely_linestring(expect_data, xoff, yoff, width=1.0, height=None):
+    x, y = rnd_coords(xoff, yoff, width, height)
+    p = shp.LineString(zip_xy(x, y))
+    expect_data["dims"] = "2d"
+    expect_data["x"] = tuple(x)
+    expect_data["y"] = tuple(y)
+    return p
+
+
+def rnd_linestring_plot2d(plot_data, xoff, yoff, width=1.0, height=None):
+    expect_data = {}
+    p = rnd_shapely_linestring(expect_data, xoff, yoff, width, height)
+    rnd_plot2d(p, expect_data, plot_data, "line")
+    return expect_data
+
+
+def rnd_shapely_multiline(expect_data, xoff, yoff, width=1.0, height=None):
+    n = rnd.randrange(1, 5)
+    xys = [None]*n
+    ex, ey = [], []
+    for i in range(n):
+        x, y = rnd_coords(xoff + (width+1)*i, yoff, width, height)
+        xys[i] = zip_xy(x, y)
+        if i > 0:
+            ex.append(None)
+            ey.append(None)
+        ex.extend(x)
+        ey.extend(y)
+    expect_data["dims"] = "2d"
+    expect_data["x"] = tuple(ex)
+    expect_data["y"] = tuple(ey)
+
+    p = shp.MultiLineString(xys)
+    return p
+
+
+def rnd_multiline_plot2d(plot_data, xoff, yoff, width=1.0, height=None):
+    expect_data = {}
+    p = rnd_shapely_multiline(expect_data, xoff, yoff, width, height)
+    rnd_plot2d(p, expect_data, plot_data, "line")
+    return expect_data
+
+
+def rnd_shapely_linering(expect_data, xoff, yoff, width=1.0, height=None):
+    x, y = rnd_coords(xoff, yoff, width, height)
+    p = shp.LinearRing(zip_xy(x, y))
+    expect_data["dims"] = "2d"
+    if (x[0] != x[-1]) or (y[0] != y[-1]):
+        # Add closing point.
+        expect_data["x"] = tuple(x) + (x[0],)
+        expect_data["y"] = tuple(y) + (y[0],)
+    else:
+        # Already closed
+        expect_data["x"] = tuple(x)
+        expect_data["y"] = tuple(y)
+
+    return p
+
+
+def rnd_linering_plot2d(plot_data, xoff, yoff, width=1.0, height=None):
+    expect_data = {}
+    p = rnd_shapely_linering(expect_data, xoff, yoff, width, height)
+    rnd_plot2d(p, expect_data, plot_data, "line")
+    return expect_data
+
+
 def rnd_plot2d(geom, expect_data, plot_data, style_mode):
     """
     Randomly plot-2D a geometry object, applying a random style in one of four ways.
@@ -188,7 +254,8 @@ def rnd_plot2d(geom, expect_data, plot_data, style_mode):
 
 # Functions to grab 0) Line style, 1) marker style, 2) fill color, 3) with_fill
 style_usage = {
-    "point": (lambda s: None, lambda s: s.point_style, lambda s: None, False)
+    "point": (lambda s: None, lambda s: s.point_style, lambda s: None, False),
+    "line": (lambda s: s.line_style, lambda s: s.vertex_style, lambda s: None, False)
 }
 
 
@@ -219,7 +286,7 @@ def add_normalized_style_info(expect_data, style, style_mode):
         expect_data["line"] = {
             "dash": None,  # FIXME
             "color": line_style["color"],
-            "widht": line_style["width"]
+            "width": line_style["width"]
         }
     else:
         expect_data["line"] = {'color': None, 'width': None, 'dash': None}
@@ -232,7 +299,7 @@ def add_normalized_style_info(expect_data, style, style_mode):
             "line": {"color": None, "width": None}
         }
     else:
-        expect_data["marker"] = None  # FIXME
+        expect_data["marker"] = {'color': None, 'size': None, 'symbol': None, 'line': {'color': None, 'width': None}}
 
     # FIXME: TBD
     expect_data["legendgroup"] = style.legend_group
@@ -240,9 +307,9 @@ def add_normalized_style_info(expect_data, style, style_mode):
     expect_data["showlegend"] = False
 
     if "mode" not in expect_data:
-        has_line = line_style is not None
+        has_lines = line_style is not None
         has_markers = marker_style is not None
-        if has_line:
+        if has_lines:
             if has_markers:
                 mode = "lines+markers"
             else:

@@ -97,7 +97,7 @@ def rnd_color():
     """
     r, g, b = (rnd.randrange(256) for i in range(3))
 
-    a = max(0.0, min(1.0, rnd.uniform(-0.5, 1.5)))
+    a = max(0.0, min(1.0, rnd.uniform(0.2, 1.5)))
 
     return shpl.rgb(r, g, b, a)
 
@@ -108,8 +108,10 @@ def rnd_style(with_fill):
     if rnd.uniform(0.0, 1.0) < 0.5:
         s.parent = rnd_style(with_fill)
 
-    s.line_style, s.vertex_style, s.fill_color = rnd_style_elements(with_fill)
-    s.hole_line_style, s.hole_vertex_style, _ = rnd_style_elements(False)
+    s.line_style, s.vertex_style, s.fill_color = \
+        rnd_style_elements(with_fill, s.parent.line_style, s.parent.vertex_style)
+    s.hole_line_style, s.hole_vertex_style, _ = \
+        rnd_style_elements(False, s.parent.hole_line_style, s.parent.hole_vertex_style)
     s.point_style = rnd_marker_style()
     u = rnd.uniform(0.0, 1.0)
     if u < 0.2:
@@ -131,12 +133,12 @@ def rnd_style(with_fill):
     return s
 
 
-def rnd_style_elements(with_fill):
+def rnd_style_elements(with_fill, parent_line_style, parent_vertex_style):
     e_bits = 8 if with_fill else 4
     elements = rnd.randrange(1, e_bits)
 
     if elements & 1:
-        if rnd.uniform(0.0, 1.0) < 0.2:
+        if (parent_line_style is not None) and (rnd.uniform(0.0, 1.0) < 0.2):
             line_style = shpl.DEFAULT
         else:
             line_style = rnd_line_style()
@@ -144,7 +146,7 @@ def rnd_style_elements(with_fill):
         line_style = None
 
     if elements & 2:
-        if rnd.uniform(0.0, 1.0) < 0.2:
+        if (parent_vertex_style is not None) and  (rnd.uniform(0.0, 1.0) < 0.2):
             vertex_style = shpl.DEFAULT
         else:
             vertex_style = rnd_marker_style()
