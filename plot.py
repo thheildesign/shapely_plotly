@@ -453,8 +453,10 @@ def plot_polygon2d(sh_polygon, data, style=DEFAULT, name=DEFAULT, legend_group=D
     if need_fill_plot:
         if mode is None:
             # No lines or markers, only fill.
+            # Mode is lines, but we set the line style to None (no lines)
+            # FIXME: Verify this works visually.
             mode = "lines"
-            line_style = {"color": "rgba(0,0,0,0)", "width": 0}  # Invisible lines for fill plot.
+            line_style = None
 
         # Fill color == None means no fill.
         if fill_color is None:
@@ -477,6 +479,10 @@ def plot_polygon2d(sh_polygon, data, style=DEFAULT, name=DEFAULT, legend_group=D
         h_show_legend = False
         e_show_legend = False
     else:
+        if not has_interiors:
+            # Has no drawing elements.  Nothing to plot.
+            return
+
         if h_mode is None:
             # Use exterior to draw legend.
             # h_show_legend is not used.
@@ -509,7 +515,7 @@ def plot_polygon2d(sh_polygon, data, style=DEFAULT, name=DEFAULT, legend_group=D
                                  )
             data.append(scat)
 
-    return data
+    return
 
 
 sh.Polygon.plotly_draw2d = plot_polygon2d

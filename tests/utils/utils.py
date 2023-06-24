@@ -24,7 +24,6 @@ def normalize_plot_data(plot_data):
 
 
 norm_fields_2d = [
-    "fill",
     "fillcolor",
     "hovertext",
     "legendgroup",
@@ -54,6 +53,11 @@ def normalize_plot_obj(plot_obj):
     # Grab all the easy fields
     for field in norm_fields:
         d[field] = getattr(plot_obj, field)
+
+    # Polygons will sometimes be labled as fill toself even when there is no fill color.
+    # In this case we ignore it, because filling with no fill color will not fill.  So we normalize it to None
+    fill = plot_obj.fill
+    d["fill"] = None if (plot_obj.fillcolor is None) else fill
 
     # Normalize line and marker styles to dictionaries
     d["line"] = normalize_line_style(plot_obj.line)
@@ -109,9 +113,9 @@ def rnd_style(with_fill):
         s.parent = rnd_style(with_fill)
 
     s.line_style, s.vertex_style, s.fill_color = \
-        rnd_style_elements(with_fill, s.parent.line_style, s.parent.vertex_style)
+        rnd_style_elements(with_fill, s.parent.line_style, s.parent.vertex_style, s.parent.fill_color)
     s.hole_line_style, s.hole_vertex_style, _ = \
-        rnd_style_elements(False, s.parent.hole_line_style, s.parent.hole_vertex_style)
+        rnd_style_elements(False, s.parent.hole_line_style, s.parent.hole_vertex_style, None)
     s.point_style = rnd_marker_style()
     u = rnd.uniform(0.0, 1.0)
     if u < 0.2:
@@ -133,7 +137,7 @@ def rnd_style(with_fill):
     return s
 
 
-def rnd_style_elements(with_fill, parent_line_style, parent_vertex_style):
+def rnd_style_elements(with_fill, parent_line_style, parent_vertex_style, parent_fill_color):
     e_bits = 8 if with_fill else 4
     elements = rnd.randrange(1, e_bits)
 
@@ -153,8 +157,8 @@ def rnd_style_elements(with_fill, parent_line_style, parent_vertex_style):
     else:
         vertex_style = None
 
-    if elements & 3:
-        if rnd.uniform(0.0, 1.0) < 0.2:
+    if elements & 4:
+        if (parent_fill_color is not None ) and (rnd.uniform(0.0, 1.0) < 0.2):
             fill_color = shpl.DEFAULT
         else:
             fill_color = rnd_color()
