@@ -373,6 +373,9 @@ def plot_polygon3d(sh_polygon, data, style=DEFAULT, name=DEFAULT, legend_group=D
 
 sh.Polygon.plotly_draw3d = plot_polygon3d
 
+# For polygons we need a line style that plots no line at all.   We use alpha=0, width=0.
+no_line_style = dict(color="rgba(0,0,0,0)", width=0)
+
 
 def plot_polygon2d(sh_polygon, data, style=DEFAULT, name=DEFAULT, legend_group=DEFAULT):
     """
@@ -454,9 +457,8 @@ def plot_polygon2d(sh_polygon, data, style=DEFAULT, name=DEFAULT, legend_group=D
         if mode is None:
             # No lines or markers, only fill.
             # Mode is lines, but we set the line style to None (no lines)
-            # FIXME: Verify this works visually.
             mode = "lines"
-            line_style = None
+            line_style = no_line_style
 
         # Fill color == None means no fill.
         if fill_color is None:

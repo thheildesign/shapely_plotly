@@ -31,13 +31,7 @@ def zip_xy(x, y):
     return z
 
 
-def rnd_rect_coords(xoff, yoff, max_width=1.0, max_height=None):
-    if max_height is None:
-        max_height = max_width
-
-    width = rnd.uniform(max_width * 0.5, max_width)
-    height = rnd.uniform(max_height * 0.5, max_height)
-
+def fixed_rect_coords(xoff, yoff, width, height):
     x0 = xoff
     x1 = xoff + width
     y0 = yoff
@@ -47,6 +41,20 @@ def rnd_rect_coords(xoff, yoff, max_width=1.0, max_height=None):
 
     x, y = complete_poly_coords(x, y)
 
+    return x, y
+
+
+def rnd_rect_coords(xoff, yoff, max_width=1.0, max_height=None):
+    if max_height is None:
+        max_height = max_width
+
+    width = rnd.uniform(max_width * 0.5, max_width)
+    height = rnd.uniform(max_height * 0.5, max_height)
+
+    xoff = rnd.uniform(xoff, xoff + max_width - width)
+    yoff = rnd.uniform(yoff, yoff + max_height - height)
+
+    x, y = fixed_rect_coords(xoff, yoff, width, height)
     return x, y
 
 
@@ -167,10 +175,10 @@ def rnd_linestring_plot2d(plot_data, xoff, yoff, width=1.0, height=None):
 
 def rnd_shapely_multiline(expect_data, xoff, yoff, width=1.0, height=None):
     n = rnd.randrange(1, 5)
-    xys = [None]*n
+    xys = [None] * n
     ex, ey = [], []
     for i in range(n):
-        x, y = rnd_coords(xoff + (width+1)*i, yoff, width, height)
+        x, y = rnd_coords(xoff + (width + 1) * i, yoff, width, height)
         xys[i] = zip_xy(x, y)
         if i > 0:
             ex.append(None)
@@ -217,11 +225,11 @@ def rnd_linering_plot2d(plot_data, xoff, yoff, width=1.0, height=None):
 
 def rnd_shapely_poly_simple(expect_data, xoff, yoff, width=1.0, height=None):
     if rnd.uniform(0.0, 1.0) < 0.2:
-        x,y = rnd_rect_coords(xoff, yoff, width, height)
+        x, y = rnd_rect_coords(xoff, yoff, width, height)
     else:
-        x,y = rnd_poly_coords(xoff, yoff, width, height)
+        x, y = rnd_poly_coords(xoff, yoff, width, height)
 
-    p = shp.Polygon(shell=zip_xy(x,y))
+    p = shp.Polygon(shell=zip_xy(x, y))
     expect_data["dims"] = "2d"
     if (x[0] != x[-1]) or (y[0] != y[-1]):
         # Add closing point.
@@ -287,6 +295,8 @@ style_usage = {
     "poly": (lambda s: s.line_style, lambda s: s.vertex_style, lambda s: s.fill_color, True)
 }
 
+expected_no_line_style = {"color": "rgba(0,0,0,0)", "width": 0, "dash": None}
+
 
 def add_normalized_style_info(expect_data, style, style_mode):
     line_style, marker_style, fill_color = (f(style) for f in style_usage[style_mode][0:3])
@@ -348,7 +358,8 @@ def add_normalized_style_info(expect_data, style, style_mode):
                 mode = "markers"
             else:
                 # No lines or markers, so must have a fill.
-                assert fill_color is not None , "Style should have lines, markers or a fill color"
+                assert fill_color is not None, "Style should have lines, markers or a fill color"
                 # In this case, what we do is lines mode, and then have no line.
                 mode = "lines"
+                expect_data["line"] = expected_no_line_style
         expect_data["mode"] = mode
