@@ -71,7 +71,7 @@ Defined tests are:"""
                 num_found += 1
                 break
         if num_found == 0:
-            print("\nTest {repr(test_re)} not found.")
+            print(f"\nTest {repr(test_re)} not found.")
 
     return
 

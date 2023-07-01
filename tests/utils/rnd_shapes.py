@@ -301,6 +301,43 @@ def rnd_poly_complex_plot2d(expect_data_list, plot_data, xoff, yoff, width=1.0, 
     return
 
 
+def rnd_multipoly_plot2d(expect_data_list, plot_data, xoff, yoff, width=1.0, height=None):
+    if height is None:
+        height = width
+
+    n = rnd.randrange(1, 6)
+    if n > 3:
+        pheight = height*0.45
+        ystep = height*0.55
+        nx = (n+1) // 2
+    else:
+        nx = n
+        pheight = height
+        ystep = 0.0
+
+    pwidth = (1.0 - 0.1*(nx-1))/nx
+    xstep = pwidth + 0.1
+    pwidth *= width
+    xstep *= width
+
+    geoms = []
+    xpoff = xoff
+    ypoff = yoff
+    for i in range(n):
+        poly = rnd_shapely_poly_complex(expect_data_list, xpoff, ypoff, pwidth, pheight)
+        geoms.append(poly)
+        if i==(nx-1):
+            xpoff = xoff
+            ypoff += ystep
+        else:
+            xpoff += xstep
+
+    p = shp.MultiPolygon(geoms)
+
+    rnd_multipoly_do_plot2d(p, expect_data_list, plot_data)
+    return p
+
+
 def rnd_style_plot2d(geom, plot_data, style_mode):
     """
     Randomly plot-2D a geometry object, applying a random style in one of four ways.
@@ -371,6 +408,24 @@ def rnd_poly_plot2d(geom, expect_data_list, plot_data):
     assert num_plot >= 1
     assert num_plot <= 3
 
+    add_normalized_poly_style_info(geom, expect_data_list, final_style, plot_data, pd_before, num_plot=num_plot)
+    return
+
+
+def rnd_multipoly_do_plot2d(geom: shp.MultiPolygon, expect_data_list, plot_data):
+    pd_before = len(plot_data)
+    # First we just plot the polygon.
+    final_style = rnd_style_plot2d(geom, plot_data, "poly")
+    pd_after = len(plot_data)
+
+    for poly in geom.geoms:
+        num_plot = add_normalized_poly_style_info(poly, expect_data_list, final_style, plot_data, pd_before)
+        pd_before += num_plot
+
+    assert pd_before == pd_after  # Number of plots created and expected should be consistent.
+
+
+def add_normalized_poly_style_info(geom, expect_data_list, final_style, plot_data, pd_before, num_plot=None):
     if len(geom.interiors) > 0:
         # Has interioriors.  We have 1 to 3 plots.
         total_plots = 0
@@ -423,11 +478,11 @@ def rnd_poly_plot2d(geom, expect_data_list, plot_data):
             expect_data_list.append(expect_data)
             total_plots += 1
 
-        assert num_plot == total_plots
+        assert (num_plot is None) or (num_plot == total_plots)
 
     else:
         # No interiors.  Just the one plot, and we can build just a single expected value like normal.
-        assert num_plot == 1
+        assert (num_plot is None) or (num_plot == 1)
         expect_data = {
             "dims": "2d",
             "x": tuple(c[0] for c in geom.exterior.coords),
@@ -435,8 +490,9 @@ def rnd_poly_plot2d(geom, expect_data_list, plot_data):
         }
         add_normalized_style_info(expect_data, final_style, "poly")
         expect_data_list.append(expect_data)
+        total_plots = 1
 
-    return
+    return total_plots
 
 
 # Functions to grab 0) Line style, 1) marker style, 2) fill color, 3) with_fill
