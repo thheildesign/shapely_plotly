@@ -60,8 +60,19 @@ def normalize_plot_obj(plot_obj):
     d["fill"] = None if (plot_obj.fillcolor is None) else fill
 
     # Normalize line and marker styles to dictionaries
-    d["line"] = normalize_line_style(plot_obj.line)
-    d["marker"] = normalize_marker_style(plot_obj.marker)
+    mode = d["mode"]
+    need_line = "line" in mode
+    need_marker = "marker" in mode
+
+    if need_line:
+        d["line"] = normalize_line_style(plot_obj.line)
+    else:
+        d["line"] = None # Lines not being drawn, so won't bother to verify line settings.
+
+    if need_marker:
+        d["marker"] = normalize_marker_style(plot_obj.marker)
+    else:
+        d["marker"] = None # Markers not being drawn, so won't bother to verify marker settings.
 
     return d
 

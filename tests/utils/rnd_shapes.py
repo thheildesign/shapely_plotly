@@ -249,11 +249,65 @@ def rnd_poly_simple_plot2d(plot_data, xoff, yoff, width=1.0, height=None):
     return expect_data
 
 
-def rnd_plot2d(geom, expect_data, plot_data, style_mode):
+def rnd_shapely_poly_complex(expect_data, xoff, yoff, width=1.0, height=None):
+    if height is None:
+        height = width
+
+    # Generate the hull
+    while True:
+        ext_x, ext_y = rnd_poly_coords(xoff, yoff, width, height)
+        ext_xy = zip_xy(ext_x, ext_y)
+        shell_p = shp.Polygon(shell=ext_xy)
+        if shell_p.is_valid:
+            break
+
+    num_int = rnd.randrange(0, 10)
+    if num_int > 0:
+        # Build a list of hole positions.
+        hoffsets = []
+        for hx in range(3):
+            hxoff = xoff + hx * width * 0.3 + width * 0.1
+            for hy in range(3):
+                hyoff = yoff + hy * height * 0.3 + height * 0.1
+                hoffsets.append((hxoff, hyoff))
+
+        # Scramble it.
+        rnd.shuffle(hoffsets)
+
+        holes = []
+        for (hx, hy) in hoffsets[:num_int]:
+            hole_x, hole_y = rnd_poly_coords(hx, hy, width * 0.2, height * 0.2)
+            hole_p = shp.Polygon(shell=zip_xy(hole_x, hole_y))
+            if not hole_p.is_valid:
+                # Bad hole. skip.
+                continue
+
+            if not shell_p.contains(hole_p):
+                # Hole not contained.
+                continue
+
+            holes.append(zip_xy(hole_x, hole_y))
+
+        if len(holes) > 0:
+            shell_p = shp.Polygon(shell=ext_xy, holes=holes)
+            # assert shell_p.is_valid
+
+    return shell_p
+
+
+def rnd_poly_complex_plot2d(expect_data_list, plot_data, xoff, yoff, width=1.0, height=None):
+    p = rnd_shapely_poly_complex(expect_data_list, xoff, yoff, width, height)
+    rnd_poly_plot2d(p, expect_data_list, plot_data)
+    return
+
+
+def rnd_style_plot2d(geom, plot_data, style_mode):
     """
     Randomly plot-2D a geometry object, applying a random style in one of four ways.
 
     with_fill - Whether the geometry needs a fill color.
+
+    Returns: final_style - The random style used during plotting.
     """
 
     with_fill = style_usage[style_mode][3]
@@ -284,7 +338,104 @@ def rnd_plot2d(geom, expect_data, plot_data, style_mode):
 
     geom.plotly_draw2d(plot_data, style=draw_style)
 
+    return final_style
+
+
+def rnd_plot2d(geom, expect_data, plot_data, style_mode):
+    """
+    Randomly plot-2D a geometry object, applying a random style in one of four ways.
+
+    with_fill - Whether the geometry needs a fill color.
+    """
+
+    final_style = rnd_style_plot2d(geom, plot_data, style_mode)
     add_normalized_style_info(expect_data, final_style, style_mode)
+    return
+
+
+def rnd_poly_plot2d(geom, expect_data_list, plot_data):
+    """
+    rnd_plot2d for polygons.  Polygons may create 1 to 3 plots depending on their needs.
+    This function handles special casing for them.
+
+    geom - The polygon to plot.
+    expect_data_list - A list of expect_data.  It will be appended to.
+    plot_data - Plot data.  Appended to.
+    """
+
+    pd_before = len(plot_data)
+    # First we just plot the polygon.
+    final_style = rnd_style_plot2d(geom, plot_data, "poly")
+    pd_after = len(plot_data)
+    num_plot = pd_after - pd_before
+    assert num_plot >= 1
+    assert num_plot <= 3
+
+    if len(geom.interiors) > 0:
+        # Has interioriors.  We have 1 to 3 plots.
+        total_plots = 0
+
+        # 1) Fill plot:
+        if final_style.fill_color is not None:
+            # For x,y I'm just going to take the polygon's x/ys for expected values.
+            # This is a non-test.  I could rebuild the x/y lists, but it would just be repeating the
+            # same code already in the polygon plot function.
+            fill_plot_data = plot_data[pd_before]
+            expect_data = {
+                "dims": "2d",
+                "x": tuple(fill_plot_data.x),
+                "y": tuple(fill_plot_data.y)
+            }
+
+            assert len(fill_plot_data.x) == \
+                   len(geom.exterior.xy[0]) + len(geom.interiors) + sum(len(i.xy[0]) for i in geom.interiors)
+
+            add_normalized_style_info(expect_data, final_style, "poly_fill")
+            expect_data_list.append(expect_data)
+            total_plots += 1
+
+        # 2) Exterior plot.
+        if (final_style.line_style is not None) or (final_style.vertex_style is not None):
+            ext = geom.exterior
+            ext_x, ext_y = ext.xy
+            expect_data = {
+                "dims": "2d",
+                "x": tuple(ext_x),
+                "y": tuple(ext_y)
+            }
+            add_normalized_style_info(expect_data, final_style, "line")
+            expect_data_list.append(expect_data)
+            total_plots += 1
+
+        # 3) Interiors plot.
+        if (final_style.hole_line_style is not None) or (final_style.hole_vertex_style is not None):
+            # Again, we just take the plot's xy coordinates.
+            hole_plot_data = plot_data[pd_before + total_plots]
+            expect_data = {
+                "dims": "2d",
+                "x": tuple(hole_plot_data.x),
+                "y": tuple(hole_plot_data.y)
+            }
+            assert len(hole_plot_data.x) == \
+                   len(geom.interiors) + sum(len(i.xy[0]) for i in geom.interiors) - 1
+
+            add_normalized_style_info(expect_data, final_style, "hole")
+            expect_data_list.append(expect_data)
+            total_plots += 1
+
+        assert num_plot == total_plots
+
+    else:
+        # No interiors.  Just the one plot, and we can build just a single expected value like normal.
+        assert num_plot == 1
+        expect_data = {
+            "dims": "2d",
+            "x": tuple(c[0] for c in geom.exterior.coords),
+            "y": tuple(c[1] for c in geom.exterior.coords)
+        }
+        add_normalized_style_info(expect_data, final_style, "poly")
+        expect_data_list.append(expect_data)
+
     return
 
 
@@ -292,7 +443,9 @@ def rnd_plot2d(geom, expect_data, plot_data, style_mode):
 style_usage = {
     "point": (lambda s: None, lambda s: s.point_style, lambda s: None, False),
     "line": (lambda s: s.line_style, lambda s: s.vertex_style, lambda s: None, False),
-    "poly": (lambda s: s.line_style, lambda s: s.vertex_style, lambda s: s.fill_color, True)
+    "hole": (lambda s: s.hole_line_style, lambda s: s.hole_vertex_style, lambda s: None, False),
+    "poly": (lambda s: s.line_style, lambda s: s.vertex_style, lambda s: s.fill_color, True),
+    "poly_fill": (lambda s: None, lambda s: None, lambda s: s.fill_color, True)
 }
 
 expected_no_line_style = {"color": "rgba(0,0,0,0)", "width": 0, "dash": None}
@@ -328,7 +481,7 @@ def add_normalized_style_info(expect_data, style, style_mode):
             "width": line_style["width"]
         }
     else:
-        expect_data["line"] = {'color': None, 'width': None, 'dash': None}
+        expect_data["line"] = None
 
     if (marker_style is not None) and (has_markers):
         expect_data["marker"] = {
@@ -338,7 +491,7 @@ def add_normalized_style_info(expect_data, style, style_mode):
             "line": {"color": None, "width": None}
         }
     else:
-        expect_data["marker"] = {'color': None, 'size': None, 'symbol': None, 'line': {'color': None, 'width': None}}
+        expect_data["marker"] = None
 
     # FIXME: TBD
     expect_data["legendgroup"] = style.legend_group
