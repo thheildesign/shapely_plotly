@@ -8,7 +8,7 @@ from shapely_plotly.tests.utils.rnd_shapes import (
 )
 
 from shapely_plotly.tests.utils.run_main import run_main, TDef, start_end_id
-from shapely_plotly.tests.utils.utils import normalize_plot_obj, compare_object, do_test_geom_plot2d
+from shapely_plotly.tests.utils.utils import do_test_geom_plot2d, do_test_poly_plot2d
 
 from shapely_plotly import show2d
 
@@ -120,34 +120,11 @@ def test_poly_complex_plot2d(test_num=None, show=False):
     """
     s, e = start_end_id(test_num, 100, 200)
     for i in range(s, e):
-        do_test_poly_plot2d(i, show)
+        do_test_poly_plot2d(i, show, rnd_poly_complex_plot2d, "test_poly_complex_plot2d")
     return
 
 
 test_list.append(TDef(test_poly_complex_plot2d, has_id=True, has_show=True))
-
-
-def do_test_poly_plot2d(test_num, show):
-    """
-    Single self-checking random for complex polygons.
-    It's different from the normal do_test_geom_plot2d, because a single polygone draw can create
-    more than one plot.
-    """
-    rnd.seed(test_num)
-
-    plot_data = []
-    expect_data_list = []
-    n = rnd.randrange(1, 4)
-
-    for i in range(n):
-        rnd_poly_complex_plot2d(expect_data_list, plot_data, i * 120, -50.0, width=100)
-
-    if show:
-        show2d(plot_data)
-
-    norm_data = [normalize_plot_obj(d) for d in plot_data]
-
-    compare_object("norm", norm_data, "expected", expect_data_list, f'test_poly_complex_plot2d[{test_num}]')
 
 
 def test_multipoly_plot2d(test_num=None, show=False):
@@ -156,44 +133,11 @@ def test_multipoly_plot2d(test_num=None, show=False):
     """
     s, e = start_end_id(test_num, 100, 200)
     for i in range(s, e):
-        do_test_multipoly_plot2d(i, show)
+        do_test_poly_plot2d(i, show, rnd_multipoly_plot2d, "test_multipoly_plot2d")
     return
 
 
 test_list.append(TDef(test_multipoly_plot2d, has_id=True, has_show=True))
-
-
-def do_test_multipoly_plot2d(test_num, show):
-    """
-    Single self-checking random test for multi-polygons.
-    It's unique because a single draw can create multiple plots, and there is some special
-    logic around legend groups, which multi-polygons manipulate.
-    """
-    rnd.seed(test_num)
-
-    plot_data = []
-    expect_data_list = []
-    n = rnd.randrange(1, 4)
-
-    for i in range(n):
-        data_start = len(plot_data)
-        assert len(plot_data) == len(expect_data_list)
-        rnd_multipoly_plot2d(expect_data_list, plot_data, i * 120, -50.0,width=100)
-        assert len(plot_data) == len(expect_data_list)
-        data_end = len(plot_data)
-
-        # MultiPoly plots use a legend group to tie all poly's to the same legend entry.  We capture this from
-        # the first plot in the series, and insist all plots use the same legend group.
-        legend_group = plot_data[data_start].legendgroup
-        for expect_data in expect_data_list[data_start:data_end]:
-            expect_data["legendgroup"] = legend_group
-
-    if show:
-        show2d(plot_data)
-
-    norm_data = [normalize_plot_obj(d) for d in plot_data]
-
-    compare_object("norm", norm_data, "expected", expect_data_list, f'test_poly_complex_plot2d[{test_num}]')
 
 
 if __name__ == "__main__":

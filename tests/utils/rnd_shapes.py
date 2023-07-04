@@ -249,7 +249,7 @@ def rnd_poly_simple_plot2d(plot_data, xoff, yoff, width=1.0, height=None):
     return expect_data
 
 
-def rnd_shapely_poly_complex(expect_data, xoff, yoff, width=1.0, height=None):
+def rnd_shapely_poly_complex(xoff, yoff, width=1.0, height=None):
     if height is None:
         height = width
 
@@ -296,7 +296,7 @@ def rnd_shapely_poly_complex(expect_data, xoff, yoff, width=1.0, height=None):
 
 
 def rnd_poly_complex_plot2d(expect_data_list, plot_data, xoff, yoff, width=1.0, height=None):
-    p = rnd_shapely_poly_complex(expect_data_list, xoff, yoff, width, height)
+    p = rnd_shapely_poly_complex(xoff, yoff, width, height)
     rnd_poly_plot2d(p, expect_data_list, plot_data)
     return
 
@@ -324,7 +324,7 @@ def rnd_multipoly_plot2d(expect_data_list, plot_data, xoff, yoff, width=1.0, hei
     xpoff = xoff
     ypoff = yoff
     for i in range(n):
-        poly = rnd_shapely_poly_complex(expect_data_list, xpoff, ypoff, pwidth, pheight)
+        poly = rnd_shapely_poly_complex(xpoff, ypoff, pwidth, pheight)
         geoms.append(poly)
         if i==(nx-1):
             xpoff = xoff
@@ -334,7 +334,18 @@ def rnd_multipoly_plot2d(expect_data_list, plot_data, xoff, yoff, width=1.0, hei
 
     p = shp.MultiPolygon(geoms)
 
+    data_start = len(plot_data)
+    assert data_start == len(expect_data_list)
     rnd_multipoly_do_plot2d(p, expect_data_list, plot_data)
+    data_end = len(plot_data)
+    assert data_end == len(expect_data_list)
+
+    # MultiPoly plots use a legend group to tie all poly's to the same legend entry.  We capture this from
+    # the first plot in the series, and insist all plots use the same legend group.
+    legend_group = plot_data[data_start].legendgroup
+    for expect_data in expect_data_list[data_start:data_end]:
+        expect_data["legendgroup"] = legend_group
+
     return p
 
 
