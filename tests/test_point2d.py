@@ -19,7 +19,7 @@ def test_point_plot2d(test_num=None, show=False):
     """
     s, e = start_end_id(test_num, 100, 200)
     for i in range(s, e):
-        do_test_geom_plot2d(i, show, rnd_point_plot2d)
+        do_test_geom_plot2d(i, show, rnd_point_plot2d, "test_point_plot2d")
 
     return
 
@@ -33,7 +33,7 @@ def test_multipoint_plot2d(test_num=None, show=False):
     """
     s, e = start_end_id(test_num, 100, 200)
     for i in range(s, e):
-        do_test_geom_plot2d(i, show, rnd_multipoint_plot2d)
+        do_test_geom_plot2d(i, show, rnd_multipoint_plot2d, "test_multipoint_plot2d")
     return
 
 
