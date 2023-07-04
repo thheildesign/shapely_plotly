@@ -8,7 +8,7 @@ from shapely_plotly.tests.utils.rnd_shapes import (
 )
 
 from shapely_plotly.tests.utils.run_main import run_main, TDef, start_end_id
-from shapely_plotly.tests.utils.utils import normalize_plot_obj, compare_object
+from shapely_plotly.tests.utils.utils import normalize_plot_obj, compare_object, do_test_geom_plot2d
 
 from shapely_plotly import show2d
 
@@ -19,6 +19,9 @@ test_list = []
 
 
 def test_poly_simple_plot2d(test_num=None, show=False):
+    """
+    Self-checking randoms for simple polygons (no holes) - 2D
+    """
     s, e = start_end_id(test_num, 100, 200)
     for i in range(s, e):
         do_test_geom_plot2d(i, show, rnd_poly_simple_plot2d)
@@ -31,7 +34,9 @@ test_list.append(TDef(test_poly_simple_plot2d, has_id=True, has_show=True))
 def viz_test_poly_rect_holes_plot2d(test_num=None, show=False):
     """
     The purpose of this test is to check the hole filling.  Plotly is a bit particular
-    in the CW/CCW order of exteriors and interiors.  It is must be checked individually.
+    in the CW/CCW order of exteriors and interiors.
+
+    It iust be checked individually visually.  Not self-checking.
 
     It will produce a grid of 16 polygons.  Each will have a rectangular shell, and 9 rectangular
     holes.  They will look the same, but all will have different rotations and rotation directions.
@@ -46,6 +51,9 @@ def viz_test_poly_rect_holes_plot2d(test_num=None, show=False):
 
 
 def do_test_poly_rect_holes_plot2d(test_num, show):
+    """
+    Single random test for visual hole filling.
+    """
     rnd.seed(test_num)
 
     plot_width = 100
@@ -65,10 +73,14 @@ def do_test_poly_rect_holes_plot2d(test_num, show):
     s.hole_line_style = dict(width=5, color=sh2pl.rgb(200, 200, 0))
 
     plot_data = []
+
+    # Iterate over grid of polygons.
     for gx in range(0, grid_width):
         x0 = gx * r_width
         for gy in range(0, grid_height):
             y0 = gy * r_height
+
+            # Build exterior rectangle for polygon.
             ext_x, ext_y = fixed_rect_coords(x0, y0, p_width, p_height)
 
             # Build a list of hole positions.
@@ -88,9 +100,11 @@ def do_test_poly_rect_holes_plot2d(test_num, show):
                 int_x, int_y = fixed_rect_coords(hxoff, hyoff, p_width * 0.2, p_height * 0.2)
                 holes.append(zip_xy(int_x, int_y))
 
+            # Build and plot the polygon.
             p = shp.Polygon(shell=zip_xy(ext_x, ext_y), holes=holes)
             p.plotly_draw2d(plot_data, style=s)
 
+    # Enable -s/--show to see the results.
     if show:
         show2d(plot_data)
 
@@ -101,6 +115,9 @@ test_list.append(TDef(viz_test_poly_rect_holes_plot2d, has_id=True, has_show=Tru
 
 
 def test_poly_complex_plot2d(test_num=None, show=False):
+    """
+    Self-checking randoms for complex polygons (arbitrary shapes, with arbitrary holes).
+    """
     s, e = start_end_id(test_num, 100, 200)
     for i in range(s, e):
         do_test_poly_plot2d(i, show)
@@ -111,6 +128,11 @@ test_list.append(TDef(test_poly_complex_plot2d, has_id=True, has_show=True))
 
 
 def do_test_poly_plot2d(test_num, show):
+    """
+    Single self-checking random for complex polygons.
+    It's different from the normal do_test_geom_plot2d, because a single polygone draw can create
+    more than one plot.
+    """
     rnd.seed(test_num)
 
     plot_data = []
@@ -128,27 +150,10 @@ def do_test_poly_plot2d(test_num, show):
     compare_object("norm", norm_data, "expected", expect_data_list, f'test_poly_complex_plot2d[{test_num}]')
 
 
-def do_test_geom_plot2d(test_num, show, rnd_plot_f):
-    rnd.seed(test_num)
-
-    plot_data = []
-    expect_data = []
-    n = rnd.randrange(1, 4)
-
-    for i in range(n):
-        e = rnd_plot_f(plot_data, i * 120, -50.0, width=100)
-        expect_data.append(e)
-
-    if show:
-        show2d(plot_data)
-
-    assert len(plot_data) == n
-    norm_data = [normalize_plot_obj(d) for d in plot_data]
-
-    compare_object("norm", norm_data, "expected", expect_data, f'test_point_plot2d[{test_num}]')
-
-
 def test_multipoly_plot2d(test_num=None, show=False):
+    """
+    Self-checking randoms for mulit-polygone plots - 2D.
+    """
     s, e = start_end_id(test_num, 100, 200)
     for i in range(s, e):
         do_test_multipoly_plot2d(i, show)
@@ -159,6 +164,11 @@ test_list.append(TDef(test_multipoly_plot2d, has_id=True, has_show=True))
 
 
 def do_test_multipoly_plot2d(test_num, show):
+    """
+    Single self-checking random test for multi-polygons.
+    It's unique because a single draw can create multiple plots, and there is some special
+    logic around legend groups, which multi-polygons manipulate.
+    """
     rnd.seed(test_num)
 
     plot_data = []

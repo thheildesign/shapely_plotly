@@ -302,3 +302,26 @@ def compare_dict(a_name, a, b_name, b, title):
         compare_object(new_a_name, a[k], new_b_name, b[k], title)
 
     return
+
+
+def do_test_geom_plot2d(test_num, show, rnd_plot_f):
+    """
+    Generic self-checking random test for many geometries - 2D.  One random test.
+    """
+    rnd.seed(test_num)
+
+    plot_data = []
+    expect_data = []
+    n = rnd.randrange(1, 4)
+
+    for i in range(n):
+        e = rnd_plot_f(plot_data, -2.0, -2.0, width=4.0)
+        expect_data.append(e)
+
+    if show:
+        show2d(plot_data)
+
+    assert len(plot_data) == n
+    norm_data = [normalize_plot_obj(d) for d in plot_data]
+
+    compare_object("norm", norm_data, "expected", expect_data, f'test_point_plot2d[{test_num}]')
