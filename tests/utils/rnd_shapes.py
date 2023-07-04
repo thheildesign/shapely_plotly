@@ -5,6 +5,11 @@ from shapely_plotly.tests.utils.utils import rnd_style
 import shapely_plotly as shpl
 
 
+# -----------------------------------------------------------------
+# Random coordinates
+# -----------------------------------------------------------------
+
+
 def rnd_coord(xoff, yoff, width=1.0, height=None):
     if height is None:
         height = width
@@ -125,6 +130,11 @@ def complete_poly_coords(x, y):
     return x, y
 
 
+# -----------------------------------------------------------------
+# Random Shapely geometries
+# -----------------------------------------------------------------
+
+
 def rnd_shapely_point2d(expect_data, xoff, yoff, width=1.0, height=None):
     x, y = rnd_coord(xoff, yoff, width, height)
     p = shp.Point(x, y)
@@ -132,13 +142,6 @@ def rnd_shapely_point2d(expect_data, xoff, yoff, width=1.0, height=None):
     expect_data["x"] = (x,)
     expect_data["y"] = (y,)
     return p
-
-
-def rnd_point_plot2d(plot_data, xoff, yoff, width=1.0, height=None):
-    expect_data = {}
-    p = rnd_shapely_point2d(expect_data, xoff, yoff, width, height)
-    rnd_plot2d(p, expect_data, plot_data, "point")
-    return expect_data
 
 
 def rnd_shapely_multipoint2d(expect_data, xoff, yoff, width=1.0, height=None):
@@ -150,13 +153,6 @@ def rnd_shapely_multipoint2d(expect_data, xoff, yoff, width=1.0, height=None):
     return p
 
 
-def rnd_multipoint_plot2d(plot_data, xoff, yoff, width=1.0, height=None):
-    expect_data = {}
-    p = rnd_shapely_multipoint2d(expect_data, xoff, yoff, width, height)
-    rnd_plot2d(p, expect_data, plot_data, "point")
-    return expect_data
-
-
 def rnd_shapely_linestring(expect_data, xoff, yoff, width=1.0, height=None):
     x, y = rnd_coords(xoff, yoff, width, height)
     p = shp.LineString(zip_xy(x, y))
@@ -164,13 +160,6 @@ def rnd_shapely_linestring(expect_data, xoff, yoff, width=1.0, height=None):
     expect_data["x"] = tuple(x)
     expect_data["y"] = tuple(y)
     return p
-
-
-def rnd_linestring_plot2d(plot_data, xoff, yoff, width=1.0, height=None):
-    expect_data = {}
-    p = rnd_shapely_linestring(expect_data, xoff, yoff, width, height)
-    rnd_plot2d(p, expect_data, plot_data, "line")
-    return expect_data
 
 
 def rnd_shapely_multiline(expect_data, xoff, yoff, width=1.0, height=None):
@@ -193,13 +182,6 @@ def rnd_shapely_multiline(expect_data, xoff, yoff, width=1.0, height=None):
     return p
 
 
-def rnd_multiline_plot2d(plot_data, xoff, yoff, width=1.0, height=None):
-    expect_data = {}
-    p = rnd_shapely_multiline(expect_data, xoff, yoff, width, height)
-    rnd_plot2d(p, expect_data, plot_data, "line")
-    return expect_data
-
-
 def rnd_shapely_linering(expect_data, xoff, yoff, width=1.0, height=None):
     x, y = rnd_coords(xoff, yoff, width, height)
     p = shp.LinearRing(zip_xy(x, y))
@@ -214,13 +196,6 @@ def rnd_shapely_linering(expect_data, xoff, yoff, width=1.0, height=None):
         expect_data["y"] = tuple(y)
 
     return p
-
-
-def rnd_linering_plot2d(plot_data, xoff, yoff, width=1.0, height=None):
-    expect_data = {}
-    p = rnd_shapely_linering(expect_data, xoff, yoff, width, height)
-    rnd_plot2d(p, expect_data, plot_data, "line")
-    return expect_data
 
 
 def rnd_shapely_poly_simple(expect_data, xoff, yoff, width=1.0, height=None):
@@ -240,13 +215,6 @@ def rnd_shapely_poly_simple(expect_data, xoff, yoff, width=1.0, height=None):
         expect_data["x"] = tuple(x)
         expect_data["y"] = tuple(y)
     return p
-
-
-def rnd_poly_simple_plot2d(plot_data, xoff, yoff, width=1.0, height=None):
-    expect_data = {}
-    p = rnd_shapely_poly_simple(expect_data, xoff, yoff, width, height)
-    rnd_plot2d(p, expect_data, plot_data, "poly")
-    return expect_data
 
 
 def rnd_shapely_poly_complex(xoff, yoff, width=1.0, height=None):
@@ -295,6 +263,45 @@ def rnd_shapely_poly_complex(xoff, yoff, width=1.0, height=None):
     return shell_p
 
 
+# -----------------------------------------------------------------
+# Random geometry plotting functions - 2D
+# -----------------------------------------------------------------
+
+
+def rnd_generic_plot2d(plot_data, xoff, yoff, width, height, rnd_shapely_f, style_mode):
+    """
+    Generic random create and plot function for most geometry types.
+    """
+    expect_data = {}
+    p = rnd_shapely_f(expect_data, xoff, yoff, width, height)
+    rnd_plot2d(p, expect_data, plot_data, style_mode)
+    return expect_data
+
+
+def rnd_point_plot2d(plot_data, xoff, yoff, width=1.0, height=None):
+    return rnd_generic_plot2d(plot_data, xoff,yoff, width, height, rnd_shapely_point2d, "point")
+
+
+def rnd_multipoint_plot2d(plot_data, xoff, yoff, width=1.0, height=None):
+    return rnd_generic_plot2d(plot_data, xoff,yoff, width, height, rnd_shapely_multipoint2d, "point")
+
+
+def rnd_linestring_plot2d(plot_data, xoff, yoff, width=1.0, height=None):
+    return rnd_generic_plot2d(plot_data, xoff,yoff, width, height, rnd_shapely_linestring, "line")
+
+
+def rnd_multiline_plot2d(plot_data, xoff, yoff, width=1.0, height=None):
+    return rnd_generic_plot2d(plot_data, xoff,yoff, width, height, rnd_shapely_multiline, "line")
+
+
+def rnd_linering_plot2d(plot_data, xoff, yoff, width=1.0, height=None):
+    return rnd_generic_plot2d(plot_data, xoff,yoff, width, height, rnd_shapely_linering, "line")
+
+
+def rnd_poly_simple_plot2d(plot_data, xoff, yoff, width=1.0, height=None):
+    return rnd_generic_plot2d(plot_data, xoff,yoff, width, height, rnd_shapely_poly_simple, "poly")
+
+
 def rnd_poly_complex_plot2d(expect_data_list, plot_data, xoff, yoff, width=1.0, height=None):
     p = rnd_shapely_poly_complex(xoff, yoff, width, height)
     rnd_poly_plot2d(p, expect_data_list, plot_data)
@@ -307,15 +314,15 @@ def rnd_multipoly_plot2d(expect_data_list, plot_data, xoff, yoff, width=1.0, hei
 
     n = rnd.randrange(1, 6)
     if n > 3:
-        pheight = height*0.45
-        ystep = height*0.55
-        nx = (n+1) // 2
+        pheight = height * 0.45
+        ystep = height * 0.55
+        nx = (n + 1) // 2
     else:
         nx = n
         pheight = height
         ystep = 0.0
 
-    pwidth = (1.0 - 0.1*(nx-1))/nx
+    pwidth = (1.0 - 0.1 * (nx - 1)) / nx
     xstep = pwidth + 0.1
     pwidth *= width
     xstep *= width
@@ -326,7 +333,7 @@ def rnd_multipoly_plot2d(expect_data_list, plot_data, xoff, yoff, width=1.0, hei
     for i in range(n):
         poly = rnd_shapely_poly_complex(xpoff, ypoff, pwidth, pheight)
         geoms.append(poly)
-        if i==(nx-1):
+        if i == (nx - 1):
             xpoff = xoff
             ypoff += ystep
         else:
@@ -336,8 +343,18 @@ def rnd_multipoly_plot2d(expect_data_list, plot_data, xoff, yoff, width=1.0, hei
 
     data_start = len(plot_data)
     assert data_start == len(expect_data_list)
-    rnd_multipoly_do_plot2d(p, expect_data_list, plot_data)
+
+    pd_before = data_start
+    # First we just plot the polygon collection, and get the style used.
+    final_style = rnd_style_plot2d(p, plot_data, "poly")
     data_end = len(plot_data)
+
+    # Build expected style data for all the plots.  All use the same final_style
+    for poly in p.geoms:
+        num_plot = add_normalized_poly_style_info(poly, expect_data_list, final_style, plot_data, pd_before)
+        pd_before += num_plot
+
+    assert pd_before == data_end  # Number of plots created and expected should be consistent.
     assert data_end == len(expect_data_list)
 
     # MultiPoly plots use a legend group to tie all poly's to the same legend entry.  We capture this from
@@ -349,44 +366,9 @@ def rnd_multipoly_plot2d(expect_data_list, plot_data, xoff, yoff, width=1.0, hei
     return p
 
 
-def rnd_style_plot2d(geom, plot_data, style_mode):
-    """
-    Randomly plot-2D a geometry object, applying a random style in one of four ways.
-
-    with_fill - Whether the geometry needs a fill color.
-
-    Returns: final_style - The random style used during plotting.
-    """
-
-    with_fill = style_usage[style_mode][3]
-
-    # Four methods of applying a style:
-    # a) Applied to object ahead of time.
-    # c) Given to the draw call.
-    # n) No style at all (default_style)
-    # o) An ignored style set a head of time, overlaid by the actual style at call time.
-    method = rnd.choice("acno")
-
-    if method == "a":
-        s = rnd_style(with_fill)
-        geom.plotly_set_style(s)
-        draw_style = shpl.DEFAULT
-        final_style = s
-    elif method == "c":
-        draw_style = rnd_style(with_fill)
-        final_style = draw_style
-    elif method == "n":
-        draw_style = shpl.DEFAULT
-        final_style = shpl.default_style
-    elif method == "o":
-        s = rnd_style(with_fill)
-        geom.plotly_set_style(s)
-        draw_style = rnd_style(with_fill)
-        final_style = draw_style
-
-    geom.plotly_draw2d(plot_data, style=draw_style)
-
-    return final_style
+# -----------------------------------------------------------------
+# Random plotting helper functions - 2D
+# -----------------------------------------------------------------
 
 
 def rnd_plot2d(geom, expect_data, plot_data, style_mode):
@@ -404,7 +386,7 @@ def rnd_plot2d(geom, expect_data, plot_data, style_mode):
 def rnd_poly_plot2d(geom, expect_data_list, plot_data):
     """
     rnd_plot2d for polygons.  Polygons may create 1 to 3 plots depending on their needs.
-    This function handles special casing for them.
+    This function handles special cases for them.
 
     geom - The polygon to plot.
     expect_data_list - A list of expect_data.  It will be appended to.
@@ -423,20 +405,67 @@ def rnd_poly_plot2d(geom, expect_data_list, plot_data):
     return
 
 
-def rnd_multipoly_do_plot2d(geom: shp.MultiPolygon, expect_data_list, plot_data):
-    pd_before = len(plot_data)
-    # First we just plot the polygon.
-    final_style = rnd_style_plot2d(geom, plot_data, "poly")
-    pd_after = len(plot_data)
+# Style_mode decoder map.
+# Functions to grab 0) Line style, 1) marker style, 2) fill color, 3) with_fill
+style_usage_map = {
+    "point": (lambda s: None, lambda s: s.point_style, lambda s: None, False),
+    "line": (lambda s: s.line_style, lambda s: s.vertex_style, lambda s: None, False),
+    "hole": (lambda s: s.hole_line_style, lambda s: s.hole_vertex_style, lambda s: None, False),
+    "poly": (lambda s: s.line_style, lambda s: s.vertex_style, lambda s: s.fill_color, True),
+    "poly_fill": (lambda s: None, lambda s: None, lambda s: s.fill_color, True)
+}
 
-    for poly in geom.geoms:
-        num_plot = add_normalized_poly_style_info(poly, expect_data_list, final_style, plot_data, pd_before)
-        pd_before += num_plot
 
-    assert pd_before == pd_after  # Number of plots created and expected should be consistent.
+def rnd_style_plot2d(geom, plot_data, style_mode):
+    """
+    Randomly plot-2D a geometry object, applying a random style in one of four ways.
+
+    style_mode - What kind of style the object needs.  See style_usage_map map above.
+
+    Returns: final_style - The random style used during plotting.
+    """
+
+    with_fill = style_usage_map[style_mode][3]
+
+    # Four methods of applying a style:
+    # a) Applied to object ahead of time.
+    # c) Given to the draw call.
+    # n) No style at all (default_style)
+    # o) An ignored style set a head of time, overlaid by the actual style at call time.
+    method = rnd.choice("acno")
+
+    if method == "a":
+        # a) Applied to object ahead of time.
+        s = rnd_style(with_fill)
+        geom.plotly_set_style(s)
+        draw_style = shpl.DEFAULT
+        final_style = s
+    elif method == "c":
+        # c) Given to the draw call.
+        draw_style = rnd_style(with_fill)
+        final_style = draw_style
+    elif method == "n":
+        # n) No style at all (default_style)
+        draw_style = shpl.DEFAULT
+        final_style = shpl.default_style
+    elif method == "o":
+        # o) An ignored style set a head of time, overlaid by the actual style at call time.
+        s = rnd_style(with_fill)
+        geom.plotly_set_style(s)
+        draw_style = rnd_style(with_fill)
+        final_style = draw_style
+
+    geom.plotly_draw2d(plot_data, style=draw_style)
+
+    return final_style
 
 
 def add_normalized_poly_style_info(geom, expect_data_list, final_style, plot_data, pd_before, num_plot=None):
+    """
+    Add expected data to expect_data_list for the 1 to 3 plots created by drawing a polygon (geom).
+    Unlike other geometries, polygons do not set dims and x/y as geometry creation time.
+    For polygons, those values are complex and we wait until after the plots are made to create them.
+    """
     if len(geom.interiors) > 0:
         # Has interioriors.  We have 1 to 3 plots.
         total_plots = 0
@@ -506,20 +535,16 @@ def add_normalized_poly_style_info(geom, expect_data_list, final_style, plot_dat
     return total_plots
 
 
-# Functions to grab 0) Line style, 1) marker style, 2) fill color, 3) with_fill
-style_usage = {
-    "point": (lambda s: None, lambda s: s.point_style, lambda s: None, False),
-    "line": (lambda s: s.line_style, lambda s: s.vertex_style, lambda s: None, False),
-    "hole": (lambda s: s.hole_line_style, lambda s: s.hole_vertex_style, lambda s: None, False),
-    "poly": (lambda s: s.line_style, lambda s: s.vertex_style, lambda s: s.fill_color, True),
-    "poly_fill": (lambda s: None, lambda s: None, lambda s: s.fill_color, True)
-}
-
 expected_no_line_style = {"color": "rgba(0,0,0,0)", "width": 0, "dash": None}
 
 
 def add_normalized_style_info(expect_data, style, style_mode):
-    line_style, marker_style, fill_color = (f(style) for f in style_usage[style_mode][0:3])
+    """
+    Add style info to the expected data, given the style itself, and the style_mode.
+    """
+
+    # Extract the appropriate style settings from the Style object.
+    line_style, marker_style, fill_color = (f(style) for f in style_usage_map[style_mode][0:3])
 
     expect_data["fillcolor"] = fill_color
     if fill_color is None:
