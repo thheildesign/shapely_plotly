@@ -149,8 +149,16 @@ def rnd_style(with_fill):
 
 
 def rnd_style_elements(with_fill, parent_line_style, parent_vertex_style, parent_fill_color):
+    """
+    with_fill : False - No fill color.  Must have lines or markers.
+                True  - With fill color.  Must have one of fill, lines or markers.
+    """
     e_bits = 8 if with_fill else 4
     elements = rnd.randrange(1, e_bits)
+
+    if not with_fill:
+        # Even if no fill, can still add a fill color (usually unused).
+        elements |= rnd.choice((0, 4))
 
     if elements & 1:
         if (parent_line_style is not None) and (rnd.uniform(0.0, 1.0) < 0.2):
@@ -168,7 +176,7 @@ def rnd_style_elements(with_fill, parent_line_style, parent_vertex_style, parent
     else:
         vertex_style = None
 
-    if elements & 4:
+    if (elements & 4) or (with_fill=="c"):
         if (parent_fill_color is not None ) and (rnd.uniform(0.0, 1.0) < 0.2):
             fill_color = shpl.DEFAULT
         else:
@@ -319,7 +327,7 @@ def do_test_geom_plot2d(test_num, show, rnd_plot_f, test_name):
         expect_data.append(e)
 
     if show:
-        show2d(plot_data)
+        shpl.show2d(plot_data)
 
     assert len(plot_data) == n
     norm_data = [normalize_plot_obj(d) for d in plot_data]
@@ -343,7 +351,7 @@ def do_test_poly_plot2d(test_num, show, rnd_plot_f, test_name):
         rnd_plot_f(expect_data_list, plot_data, i * 120, -50.0, width=100)
 
     if show:
-        show2d(plot_data)
+        shpl.show2d(plot_data)
 
     norm_data = [normalize_plot_obj(d) for d in plot_data]
 

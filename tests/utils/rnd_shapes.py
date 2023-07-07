@@ -263,6 +263,49 @@ def rnd_shapely_poly_complex(xoff, yoff, width=1.0, height=None):
     return shell_p
 
 
+def rnd_shapely_geom_collection(expect_data_list, max_depth, xoff, yoff, width=1.0, height=None):
+    n = rnd.randrange(1, 5)
+    geoms = []
+
+    if max_depth > 0:
+        funcs = rnd_shapely_funcs
+    else:
+        # Exclude geometry collection
+        funcs = rnd_shapely_funcs[:-1]
+
+    for i in range(n):
+        rnd_shapely_f = rnd.choice(funcs)
+        if rnd_shapely_f is rnd_shapely_poly_complex:
+            geom = rnd_shapely_poly_complex(xoff, yoff, width, height)
+            geoms.append(geom)
+            expect_data_list.append([]) # Fill in expected data later
+        elif rnd_shapely_f is rnd_shapely_geom_collection:
+            expect_data_sub_list = []
+            geom = rnd_shapely_geom_collection(expect_data_sub_list, max_depth-1, xoff, yoff, width, height)
+            expect_data_list.append(expect_data_sub_list) # Fill in expected data later
+            geoms.append(geom)
+        else:
+            # Everything else works the same.
+            expect_data = {}
+            geom = rnd_shapely_f(expect_data, xoff, yoff, width, height)
+            geoms.append(geom)
+            expect_data_list.append(expect_data)
+
+    geom_coll = shp.GeometryCollection(geoms)
+    return geom_coll
+
+# List of geometry building functions.  Used by the above.
+rnd_shapely_funcs = [
+    rnd_shapely_point2d,
+    rnd_shapely_multipoint2d,
+    rnd_shapely_linestring,
+    rnd_shapely_multiline,
+    rnd_shapely_linering,
+    rnd_shapely_poly_simple,
+    rnd_shapely_poly_complex,
+    rnd_shapely_geom_collection
+]
+
 # -----------------------------------------------------------------
 # Random geometry plotting functions - 2D
 # -----------------------------------------------------------------
@@ -366,6 +409,32 @@ def rnd_multipoly_plot2d(expect_data_list, plot_data, xoff, yoff, width=1.0, hei
     return p
 
 
+def rnd_geometry_collection_plot2d(expect_data_list, plot_data, xoff, yoff, width=1.0, height=None):
+
+    # We first build expected data into a local list.
+    # This is because some cases have to be unrolled.
+    geom_expect_data_list = []
+
+    pd_before = len(plot_data)
+
+    # Build the collection.
+    geom_coll = rnd_shapely_geom_collection(geom_expect_data_list, 2, xoff, yoff, width, height)
+
+    # Plot the collection.
+    final_style = rnd_style_plot2d(geom_coll, plot_data, "collection")
+
+    # Now we go and fill in the expected data for all the elements.
+    add_normalized_collection_style_info(geom_coll, geom_expect_data_list, expect_data_list,
+                                         final_style, plot_data, pd_before)
+
+    if final_style.legend_group is None:
+        # Had to create a random legend group.  Must copy across all the expected data.
+        legend_group = plot_data[pd_before].legendgroup
+        for expect_data in expect_data_list[pd_before:]:
+            expect_data["legendgroup"] = legend_group
+
+    return geom_coll
+
 # -----------------------------------------------------------------
 # Random plotting helper functions - 2D
 # -----------------------------------------------------------------
@@ -412,7 +481,8 @@ style_usage_map = {
     "line": (lambda s: s.line_style, lambda s: s.vertex_style, lambda s: None, False),
     "hole": (lambda s: s.hole_line_style, lambda s: s.hole_vertex_style, lambda s: None, False),
     "poly": (lambda s: s.line_style, lambda s: s.vertex_style, lambda s: s.fill_color, True),
-    "poly_fill": (lambda s: None, lambda s: None, lambda s: s.fill_color, True)
+    "poly_fill": (lambda s: None, lambda s: None, lambda s: s.fill_color, True),
+    "collection": (lambda s: s.line_style, lambda s: s.vertex_style, lambda s: s.fill_color, False),
 }
 
 
@@ -533,6 +603,55 @@ def add_normalized_poly_style_info(geom, expect_data_list, final_style, plot_dat
         total_plots = 1
 
     return total_plots
+
+add_norm_map = {
+    shp.Polygon: None, # Nonstandard.  Use add_normalized_poly_style_info,
+    shp.MultiPolygon: None, # Nonstandard
+    shp.GeometryCollection: None, # Nonstandard
+
+
+}
+
+
+style_mode_map = {
+    shp.Point: "point",
+    shp.MultiPoint: "point",
+    shp.LineString: "line",
+    shp.LinearRing: "line",
+    shp.MultiLineString: "line"
+}
+
+
+def add_normalized_collection_style_info(geom_coll, geom_expect_data_list, expect_data_list, final_style,
+                                         plot_data, plot_data_i):
+    assert len(geom_coll.geoms) == len(geom_expect_data_list)
+
+    for geom_i, geom in enumerate(geom_coll.geoms):
+        expect_data = geom_expect_data_list[geom_i]
+        geom_t = type(geom)
+
+        if geom_t is shp.Polygon:
+            num_plot = add_normalized_poly_style_info(geom, expect_data_list, final_style, plot_data, plot_data_i)
+            plot_data_i += num_plot
+
+        elif geom_t is shp.MultiPolygon:
+            # Build expected style data for all the plots.  All use the same final_style
+            for poly in geom.geoms:
+                num_plot = add_normalized_poly_style_info(poly, expect_data_list, final_style, plot_data, plot_data_i)
+                plot_data_i += num_plot
+
+        elif geom_t is shp.GeometryCollection:
+            plot_data_i = add_normalized_collection_style_info(geom, expect_data, expect_data_list, final_style,
+                                                               plot_data, plot_data_i)
+
+        else:
+            # All other geometries are handled the same
+            style_mode = style_mode_map[geom_t]
+            add_normalized_style_info(expect_data, final_style, style_mode)
+            expect_data_list.append(expect_data)
+            plot_data_i += 1
+
+    return plot_data_i
 
 
 expected_no_line_style = {"color": "rgba(0,0,0,0)", "width": 0, "dash": None}

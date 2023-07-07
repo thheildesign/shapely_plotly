@@ -17,8 +17,10 @@ The following shapely geometry objects may be plotted.
    Point
    Polygon
 
+Includes a Style system for controlling line styles, fill colors, marker styles and legends.
+
 """
-__version__ = "0.3.0"
+__version__ = "0.4.0"
 
 from .style import (
     Style,
