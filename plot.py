@@ -35,7 +35,7 @@ def unique_legend_group():
 
 
 # shapely Point
-def plot_point3d(sh_point, data, style=DEFAULT, name=DEFAULT, legend_group=DEFAULT):
+def plot_point3d(sh_point, data, style=DEFAULT, name=DEFAULT, legend_group=DEFAULT, show_legend=True):
     """
     Plot point - 3D.
 
@@ -51,7 +51,7 @@ def plot_point3d(sh_point, data, style=DEFAULT, name=DEFAULT, legend_group=DEFAU
     else:
         z = 0.0
 
-    style, name, show_legend, legend_group = resolve_info(sh_point, style, name, legend_group)
+    style, name, show_legend, legend_group = resolve_info(sh_point, style, name, legend_group, show_legend)
 
     scat = graph.Scatter3d(x=[sh_point.x], y=[sh_point.y], z=[z],
                            marker=style.point_style,
@@ -67,7 +67,7 @@ sh.Point.plotly_draw3d = plot_point3d
 
 
 # shapely Point
-def plot_point2d(sh_point, data, style=DEFAULT, name=DEFAULT, legend_group=DEFAULT):
+def plot_point2d(sh_point, data, style=DEFAULT, name=DEFAULT, legend_group=DEFAULT, show_legend=True):
     """
     Plot point - 2D.
 
@@ -78,7 +78,7 @@ def plot_point2d(sh_point, data, style=DEFAULT, name=DEFAULT, legend_group=DEFAU
     :param legend_group   Legend group to use (groups multiple items under a single legend).  Overrides style.
     """
 
-    style, name, show_legend, legend_group = resolve_info(sh_point, style, name, legend_group)
+    style, name, show_legend, legend_group = resolve_info(sh_point, style, name, legend_group, show_legend)
 
     assert style.point_style is not None
     scat = graph.Scatter(x=[sh_point.x], y=[sh_point.y],
@@ -121,7 +121,7 @@ sh.Point.plotly_draw2d = plot_point2d
 # suitable Python container, and plot them individually.
 
 # shaeply MultiPoint
-def plot_multipoint3d(sh_multipoint, data, style=DEFAULT, name=DEFAULT, legend_group=DEFAULT):
+def plot_multipoint3d(sh_multipoint, data, style=DEFAULT, name=DEFAULT, legend_group=DEFAULT, show_legend=True):
     """
     Plot multi-point - 3D.
 
@@ -134,7 +134,7 @@ def plot_multipoint3d(sh_multipoint, data, style=DEFAULT, name=DEFAULT, legend_g
 
     points = sh_multipoint.geoms
 
-    style, name, show_legend, legend_group = resolve_info(sh_multipoint, style, name, legend_group)
+    style, name, show_legend, legend_group = resolve_info(sh_multipoint, style, name, legend_group, show_legend)
 
     # Plot as a single scatter graph
     xs = [p.x for p in points]
@@ -155,7 +155,7 @@ def plot_multipoint3d(sh_multipoint, data, style=DEFAULT, name=DEFAULT, legend_g
 sh.MultiPoint.plotly_draw3d = plot_multipoint3d
 
 
-def plot_multipoint2d(sh_multipoint, data, style=DEFAULT, name=DEFAULT, legend_group=DEFAULT):
+def plot_multipoint2d(sh_multipoint, data, style=DEFAULT, name=DEFAULT, legend_group=DEFAULT, show_legend=True):
     """
     Plot multi-point - 2D.
 
@@ -170,7 +170,7 @@ def plot_multipoint2d(sh_multipoint, data, style=DEFAULT, name=DEFAULT, legend_g
     xs = [p.x for p in points]
     ys = [p.y for p in points]
 
-    style, name, show_legend, legend_group = resolve_info(sh_multipoint, style, name, legend_group)
+    style, name, show_legend, legend_group = resolve_info(sh_multipoint, style, name, legend_group, show_legend)
     assert style.point_style is not None
 
     scat = graph.Scatter(x=xs, y=ys,
@@ -185,14 +185,14 @@ def plot_multipoint2d(sh_multipoint, data, style=DEFAULT, name=DEFAULT, legend_g
 sh.MultiPoint.plotly_draw2d = plot_multipoint2d
 
 
-def __i_plot_lines_style_info(geom, style, name, legend_group, as_hole):
+def __i_plot_lines_style_info(geom, style, name, legend_group, show_legend, as_hole):
     """
     Internal function.  Get the line style info for a geometry object, based on
     parameters passed into a draw command, and style/name set for the object.
 
     Returns: mode, line_style, marker_style, name, show_legend, Style object
     """
-    style, name, show_legend, legend_group = resolve_info(geom, style, name, legend_group)
+    style, name, show_legend, legend_group = resolve_info(geom, style, name, legend_group, show_legend)
 
     if as_hole:
         line_style = style.hole_line_style
@@ -216,7 +216,7 @@ def __i_plot_lines_style_info(geom, style, name, legend_group, as_hole):
     return mode, line_style, marker_style, name, show_legend, legend_group, style
 
 
-def __i_plot_lines3d(geom, xs, ys, zs, data, style, name, show_legend, legend_group, as_hole):
+def __i_plot_lines3d(geom, xs, ys, zs, data, style, name, legend_group, show_legend, as_hole):
     """
     Internal function.  Get style for lines and plot them, 3D.
     """
@@ -224,12 +224,11 @@ def __i_plot_lines3d(geom, xs, ys, zs, data, style, name, show_legend, legend_gr
         # Empty line
         return
 
-    mode, line_style, marker_style, name, n_show_legend, legend_group, style = \
-        __i_plot_lines_style_info(geom, style, name, legend_group, as_hole)
+    mode, line_style, marker_style, name, show_legend, legend_group, style = \
+        __i_plot_lines_style_info(geom, style, name, legend_group, show_legend, as_hole)
 
     # The show legend parameter above will force the legend entry off.
     # Only show a legend if both that flag and the style and the name say it should be shown.
-    show_legend = show_legend and n_show_legend
     if mode is None:
         # Invisible
         return
@@ -244,7 +243,7 @@ def __i_plot_lines3d(geom, xs, ys, zs, data, style, name, show_legend, legend_gr
     return
 
 
-def __i_plot_lines2d(geom, xs, ys, data, style, name, legend_group, as_hole):
+def __i_plot_lines2d(geom, xs, ys, data, style, name, legend_group, show_legend, as_hole):
     """
     Internal function.  Get style for lines and plot them, 2D.
     """
@@ -253,7 +252,7 @@ def __i_plot_lines2d(geom, xs, ys, data, style, name, legend_group, as_hole):
         return
 
     mode, line_style, marker_style, name, show_legend, legend_group, style = \
-        __i_plot_lines_style_info(geom, style, name, legend_group, as_hole)
+        __i_plot_lines_style_info(geom, style, name, legend_group, show_legend, as_hole)
 
     if mode is None:
         # Invisible
@@ -270,7 +269,7 @@ def __i_plot_lines2d(geom, xs, ys, data, style, name, legend_group, as_hole):
 
 
 def plot_line_string3d(sh_line_string, data, style=DEFAULT,
-                       name=DEFAULT, show_legend=True, legend_group=DEFAULT):
+                       name=DEFAULT, legend_group=DEFAULT, show_legend=True):
     """
     Plot line String/Ring - 3D.
 
@@ -281,12 +280,12 @@ def plot_line_string3d(sh_line_string, data, style=DEFAULT,
     :param legend_group   Legend group to use (groups multiple items under a single legend).  Overrides style.
     """
     __i_plot_line_string3d(sh_line_string, data, style,
-                           name, True, legend_group, as_hole=False)
+                           name, legend_group, show_legend, as_hole=False)
 
 
 # shapely LineString
 def __i_plot_line_string3d(sh_line_string, data, style,
-                           name, show_legend, legend_group, as_hole):
+                           name, legend_group, show_legend, as_hole):
     coords = sh_line_string.coords
     n = len(coords)
     xs = [None] * n
@@ -303,14 +302,15 @@ def __i_plot_line_string3d(sh_line_string, data, style,
             xs[i] = c[0]
             ys[i] = c[1]
 
-    __i_plot_lines3d(sh_line_string, xs, ys, zs, data, style, name, show_legend, legend_group, as_hole)
+    __i_plot_lines3d(sh_line_string, xs, ys, zs, data, style, name, legend_group, show_legend, as_hole)
     return
 
 
 sh.LineString.plotly_draw3d = plot_line_string3d
 
 
-def plot_line_string2d(sh_line_string, data, style=DEFAULT, name=DEFAULT, legend_group=DEFAULT, as_hole=False):
+def plot_line_string2d(sh_line_string, data, style=DEFAULT, name=DEFAULT, legend_group=DEFAULT,
+                       show_legend=True, as_hole=False):
     """
     Plot line String/Ring - 2D.
 
@@ -326,7 +326,7 @@ def plot_line_string2d(sh_line_string, data, style=DEFAULT, name=DEFAULT, legend
     xs = list(xs)
     ys = list(ys)
 
-    __i_plot_lines2d(sh_line_string, xs, ys, data, style, name, legend_group, as_hole)
+    __i_plot_lines2d(sh_line_string, xs, ys, data, style, name, legend_group, show_legend, as_hole)
     return
 
 
@@ -338,7 +338,7 @@ sh.LinearRing.plotly_draw3d = plot_line_string3d
 
 
 # shapely Polygon
-def plot_polygon3d(sh_polygon, data, style=DEFAULT, name=DEFAULT, legend_group=DEFAULT):
+def plot_polygon3d(sh_polygon, data, style=DEFAULT, name=DEFAULT, legend_group=DEFAULT, show_legend=True):
     """
     Plot Polygon - 3D.
 
@@ -350,7 +350,7 @@ def plot_polygon3d(sh_polygon, data, style=DEFAULT, name=DEFAULT, legend_group=D
     """
 
     _, _, _, name, show_legend, legend_group, style = \
-        __i_plot_lines_style_info(sh_polygon, style, name, legend_group, as_hole=False)
+        __i_plot_lines_style_info(sh_polygon, style, name, legend_group, show_legend, as_hole=False)
 
     # If the legend is shown and has the polygon hasinteriors, then force all plots onto the same legend group.
     # If one wasn't defined, then create a unique one.
@@ -361,12 +361,12 @@ def plot_polygon3d(sh_polygon, data, style=DEFAULT, name=DEFAULT, legend_group=D
 
     # Plot the exterior hull
     # FIXME: Misformed polygons?  Empty polygons?  Empty exterior with holes?
-    __i_plot_line_string3d(sh_polygon.exterior, data, style, name, True, legend_group, False)
+    __i_plot_line_string3d(sh_polygon.exterior, data, style, name, legend_group, show_legend, False)
 
     # Plot the interior holes.  No name on these so no legend entry.
     # FIXME: Tool tips not right, because no name.  Need explicit show-legend to this call.
     for interior in sh_polygon.interiors:
-        __i_plot_line_string3d(interior, data, style, name, False, legend_group, True)
+        __i_plot_line_string3d(interior, data, style, name, legend_group, False, True)
 
     return
 
@@ -377,7 +377,7 @@ sh.Polygon.plotly_draw3d = plot_polygon3d
 no_line_style = dict(color="rgba(0,0,0,0)", width=0)
 
 
-def plot_polygon2d(sh_polygon, data, style=DEFAULT, name=DEFAULT, legend_group=DEFAULT):
+def plot_polygon2d(sh_polygon, data, style=DEFAULT, name=DEFAULT, legend_group=DEFAULT, show_legend=True):
     """
     Plot Polygon - 2D.
 
@@ -389,7 +389,7 @@ def plot_polygon2d(sh_polygon, data, style=DEFAULT, name=DEFAULT, legend_group=D
     """
 
     mode, line_style, marker_style, name, show_legend, legend_group, style = \
-        __i_plot_lines_style_info(sh_polygon, style, name, legend_group, as_hole=False)
+        __i_plot_lines_style_info(sh_polygon, style, name, legend_group, show_legend, as_hole=False)
 
     ext = sh_polygon.exterior
     ext_n = len(ext.coords)
@@ -417,7 +417,7 @@ def plot_polygon2d(sh_polygon, data, style=DEFAULT, name=DEFAULT, legend_group=D
 
         # Hole styles
         h_mode, h_line_style, h_marker_style, _, _, _, _ = \
-            __i_plot_lines_style_info(sh_polygon, style, name, legend_group, as_hole=True)
+            __i_plot_lines_style_info(sh_polygon, style, name, legend_group, show_legend, as_hole=True)
 
         # Save exterior styles for exterior plot.
         e_mode, e_line_style = mode, line_style
@@ -523,11 +523,11 @@ def plot_polygon2d(sh_polygon, data, style=DEFAULT, name=DEFAULT, legend_group=D
 sh.Polygon.plotly_draw2d = plot_polygon2d
 
 
-def plot_multiline3d(sh_multiline, data, style=DEFAULT, name=DEFAULT, legend_group=DEFAULT):
+def plot_multiline3d(sh_multiline, data, style=DEFAULT, name=DEFAULT, legend_group=DEFAULT, show_legend=True):
     """
     Plot Multi-line string - 3D.
 
-    :param sh_multiline: Shapely point object.
+    :param sh_multiline: Shapely geometry.
     :param data: List of plotly graph objects.  Graph is appended to this.
     :param style:  shapely_plotly Style object.  Overrides any style defined for sh_multiline.
     :param name:   Name for the object in Plotly plot.  Overrides any name defined for the sh_multiline.
@@ -587,14 +587,14 @@ def plot_multiline3d(sh_multiline, data, style=DEFAULT, name=DEFAULT, legend_gro
         del ys[index:]
         del zs[index:]
 
-    __i_plot_lines3d(sh_multiline, xs, ys, zs, data, style, name, True, legend_group, as_hole=False)
+    __i_plot_lines3d(sh_multiline, xs, ys, zs, data, style, name, legend_group, show_legend, as_hole=False)
     return
 
 
 sh.MultiLineString.plotly_draw3d = plot_multiline3d
 
 
-def plot_multiline2d(sh_multiline, data, style=DEFAULT, name=DEFAULT, legend_group=DEFAULT):
+def plot_multiline2d(sh_multiline, data, style=DEFAULT, name=DEFAULT, legend_group=DEFAULT, show_legend=True):
     """
     Plot Multi-line string - 2D.
 
@@ -651,7 +651,7 @@ def plot_multiline2d(sh_multiline, data, style=DEFAULT, name=DEFAULT, legend_gro
         del xs[index:]
         del ys[index:]
 
-    __i_plot_lines2d(sh_multiline, xs, ys, data, style, name, legend_group, as_hole=False)
+    __i_plot_lines2d(sh_multiline, xs, ys, data, style, name, legend_group, show_legend, as_hole=False)
     return
 
 
@@ -659,7 +659,7 @@ sh.MultiLineString.plotly_draw2d = plot_multiline2d
 
 
 # shapely GeometryCollection
-def plot_geometry_collection3d(sh_geo_col, data, style=DEFAULT, name=DEFAULT, legend_group=DEFAULT):
+def plot_geometry_collection3d(sh_geo_col, data, style=DEFAULT, name=DEFAULT, legend_group=DEFAULT, show_legend=True):
     """
     Plot geometry collection - 3D.
 
@@ -679,15 +679,15 @@ def plot_geometry_collection3d(sh_geo_col, data, style=DEFAULT, name=DEFAULT, le
         return
 
     # Get style controls for this object.
-    style, name, _, legend_group = resolve_info(sh_geo_col, style, name, legend_group)
+    style, name, _, legend_group = resolve_info(sh_geo_col, style, name, legend_group, show_legend)
 
     # Get unique legend group ID
     if legend_group is None:
         legend_group = unique_legend_group()
 
     for g in geoms:
-        g.plotly_draw3d(data, style, name, legend_group)
-        name = None  # Only the first geometry should have a name, and therefore generate a legend entry.
+        g.plotly_draw3d(data, style, name, legend_group, show_legend)
+        show_legend = False  # At most the first plot creates a legend entry.
 
     return
 
@@ -699,7 +699,7 @@ sh.GeometryCollection.plotly_draw3d = plot_geometry_collection3d
 sh.MultiPolygon.plotly_draw3d = plot_geometry_collection3d
 
 
-def plot_geometry_collection2d(sh_geo_col, data, style=DEFAULT, name=DEFAULT, legend_group=DEFAULT):
+def plot_geometry_collection2d(sh_geo_col, data, style=DEFAULT, name=DEFAULT, legend_group=DEFAULT, show_legend=True):
     """
     Plot geometry collection - 2D.
 
@@ -716,16 +716,16 @@ def plot_geometry_collection2d(sh_geo_col, data, style=DEFAULT, name=DEFAULT, le
         return
 
     # Get style controls for this object.
-    style, name, _, legend_group = resolve_info(sh_geo_col, style, name, legend_group)
+    style, name, _, legend_group = resolve_info(sh_geo_col, style, name, legend_group, show_legend)
 
     # Get unique legend group ID
-    if legend_group is None:
+    if (legend_group is None) and (len(geoms) > 1):
         legend_group = unique_legend_group()
 
     # Single legend and use this style.
     for g in geoms:
-        g.plotly_draw2d(data, style, name, legend_group)
-        name = None  # Only the first geometry should have a name, and therefore generate a legend entry.
+        g.plotly_draw2d(data, style, name, legend_group, show_legend)
+        show_legend = False  # Only the first geometry should have a legend entry.
 
     return
 

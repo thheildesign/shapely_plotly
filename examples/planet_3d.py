@@ -137,8 +137,7 @@ for arc in range(num_arcs):
     arc_style = arc_styles[arc_style_i]
 
     # Plot it
-    arc_geom.plotly_draw3d(plot_data, style=arc_style, name=name, legend_group="PLanetLG")
-
-    name = None  # Only the first line needs a name!
+    arc_geom.plotly_draw3d(plot_data, style=arc_style,
+                           name=f'{name}_t{arc}', legend_group="PLanetLG", show_legend=(arc == 0))
 
 sh2pl.show3d(plot_data)

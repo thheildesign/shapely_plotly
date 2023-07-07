@@ -1,7 +1,7 @@
 import random as rnd
 from math import pi, sin, cos
 import shapely as shp
-from shapely_plotly.tests.utils.utils import rnd_style
+from shapely_plotly.tests.utils.utils import rnd_style, rnd_string
 import shapely_plotly as shpl
 
 
@@ -389,12 +389,12 @@ def rnd_multipoly_plot2d(expect_data_list, plot_data, xoff, yoff, width=1.0, hei
 
     pd_before = data_start
     # First we just plot the polygon collection, and get the style used.
-    final_style = rnd_style_plot2d(p, plot_data, "poly")
+    final_style, final_name = rnd_style_plot2d(p, plot_data, "poly")
     data_end = len(plot_data)
 
     # Build expected style data for all the plots.  All use the same final_style
     for poly in p.geoms:
-        num_plot = add_normalized_poly_style_info(poly, expect_data_list, final_style, plot_data, pd_before)
+        num_plot = add_normalized_poly_style_info(poly, expect_data_list, final_style, final_name, plot_data, pd_before)
         pd_before += num_plot
 
     assert pd_before == data_end  # Number of plots created and expected should be consistent.
@@ -402,9 +402,18 @@ def rnd_multipoly_plot2d(expect_data_list, plot_data, xoff, yoff, width=1.0, hei
 
     # MultiPoly plots use a legend group to tie all poly's to the same legend entry.  We capture this from
     # the first plot in the series, and insist all plots use the same legend group.
-    legend_group = plot_data[data_start].legendgroup
-    for expect_data in expect_data_list[data_start:data_end]:
-        expect_data["legendgroup"] = legend_group
+    # FIXME: Very duplicate logic else.
+    if (data_end-data_start) > 1:
+        if final_style.legend_group is None:
+            legend_group = plot_data[data_start].legendgroup
+            for expect_data in expect_data_list[data_start:]:
+                expect_data["legendgroup"] = legend_group
+
+        show_legend = final_name is not None
+        if show_legend:
+            for expect_data in expect_data_list[data_start:]:
+                expect_data["showlegend"] = show_legend
+                show_legend = False
 
     return p
 
@@ -421,17 +430,26 @@ def rnd_geometry_collection_plot2d(expect_data_list, plot_data, xoff, yoff, widt
     geom_coll = rnd_shapely_geom_collection(geom_expect_data_list, 2, xoff, yoff, width, height)
 
     # Plot the collection.
-    final_style = rnd_style_plot2d(geom_coll, plot_data, "collection")
+    final_style, final_name = rnd_style_plot2d(geom_coll, plot_data, "collection")
 
     # Now we go and fill in the expected data for all the elements.
     add_normalized_collection_style_info(geom_coll, geom_expect_data_list, expect_data_list,
-                                         final_style, plot_data, pd_before)
+                                         final_style, final_name, plot_data, pd_before)
 
-    if final_style.legend_group is None:
-        # Had to create a random legend group.  Must copy across all the expected data.
-        legend_group = plot_data[pd_before].legendgroup
-        for expect_data in expect_data_list[pd_before:]:
-            expect_data["legendgroup"] = legend_group
+    # FIXME: Duplicated logic elsewhere.
+    # Also this should b in the add_normalized call above.
+    if (len(plot_data) - pd_before) > 1:
+        if final_style.legend_group is None:
+            # Had to create a random legend group.  Must copy across all the expected data.
+            legend_group = plot_data[pd_before].legendgroup
+            for expect_data in expect_data_list[pd_before:]:
+                expect_data["legendgroup"] = legend_group
+
+        if final_name is not None:
+            show_legend = True
+            for expect_data in expect_data_list[pd_before:]:
+                expect_data["showlegend"] = show_legend
+                show_legend = False
 
     return geom_coll
 
@@ -447,8 +465,8 @@ def rnd_plot2d(geom, expect_data, plot_data, style_mode):
     with_fill - Whether the geometry needs a fill color.
     """
 
-    final_style = rnd_style_plot2d(geom, plot_data, style_mode)
-    add_normalized_style_info(expect_data, final_style, style_mode)
+    final_style, final_name = rnd_style_plot2d(geom, plot_data, style_mode)
+    add_normalized_style_info(expect_data, final_style, final_name, style_mode)
     return
 
 
@@ -464,13 +482,14 @@ def rnd_poly_plot2d(geom, expect_data_list, plot_data):
 
     pd_before = len(plot_data)
     # First we just plot the polygon.
-    final_style = rnd_style_plot2d(geom, plot_data, "poly")
+    final_style, final_name = rnd_style_plot2d(geom, plot_data, "poly")
     pd_after = len(plot_data)
     num_plot = pd_after - pd_before
     assert num_plot >= 1
     assert num_plot <= 3
 
-    add_normalized_poly_style_info(geom, expect_data_list, final_style, plot_data, pd_before, num_plot=num_plot)
+    add_normalized_poly_style_info(geom, expect_data_list, final_style, final_name,
+                                   plot_data, pd_before, num_plot=num_plot)
     return
 
 
@@ -525,12 +544,37 @@ def rnd_style_plot2d(geom, plot_data, style_mode):
         draw_style = rnd_style(with_fill)
         final_style = draw_style
 
-    geom.plotly_draw2d(plot_data, style=draw_style)
+    # The same four methods are used for naming
+    method = rnd.choice("acno")
 
-    return final_style
+    if method == "a":
+        # a) Applied to object ahead of time.
+        name = rnd_string()
+        geom.plotly_set_name(name)
+        draw_name = shpl.DEFAULT
+        final_name = name
+    elif method == "c":
+        # c) Given to the draw call.
+        draw_name = rnd_string()
+        final_name = draw_name
+    elif method == "n":
+        # n) No style at all (default_name)
+        draw_name = shpl.DEFAULT
+        final_name = None
+    elif method == "o":
+        # o) An ignored style set a head of time, overlaid by the actual style at call time.
+        s = rnd_string()
+        geom.plotly_set_name(s)
+        draw_name = rnd_string()
+        final_name = draw_name
+
+    geom.plotly_draw2d(plot_data, style=draw_style, name=draw_name)
+
+    return final_style, final_name
 
 
-def add_normalized_poly_style_info(geom, expect_data_list, final_style, plot_data, pd_before, num_plot=None):
+def add_normalized_poly_style_info(geom, expect_data_list, final_style, final_name,
+                                   plot_data, pd_before, num_plot=None):
     """
     Add expected data to expect_data_list for the 1 to 3 plots created by drawing a polygon (geom).
     Unlike other geometries, polygons do not set dims and x/y as geometry creation time.
@@ -555,7 +599,7 @@ def add_normalized_poly_style_info(geom, expect_data_list, final_style, plot_dat
             assert len(fill_plot_data.x) == \
                    len(geom.exterior.xy[0]) + len(geom.interiors) + sum(len(i.xy[0]) for i in geom.interiors)
 
-            add_normalized_style_info(expect_data, final_style, "poly_fill")
+            add_normalized_style_info(expect_data, final_style, final_name, "poly_fill")
             expect_data_list.append(expect_data)
             total_plots += 1
 
@@ -568,7 +612,7 @@ def add_normalized_poly_style_info(geom, expect_data_list, final_style, plot_dat
                 "x": tuple(ext_x),
                 "y": tuple(ext_y)
             }
-            add_normalized_style_info(expect_data, final_style, "line")
+            add_normalized_style_info(expect_data, final_style, final_name, "line")
             expect_data_list.append(expect_data)
             total_plots += 1
 
@@ -584,7 +628,7 @@ def add_normalized_poly_style_info(geom, expect_data_list, final_style, plot_dat
             assert len(hole_plot_data.x) == \
                    len(geom.interiors) + sum(len(i.xy[0]) for i in geom.interiors) - 1
 
-            add_normalized_style_info(expect_data, final_style, "hole")
+            add_normalized_style_info(expect_data, final_style, final_name, "hole")
             expect_data_list.append(expect_data)
             total_plots += 1
 
@@ -598,9 +642,22 @@ def add_normalized_poly_style_info(geom, expect_data_list, final_style, plot_dat
             "x": tuple(c[0] for c in geom.exterior.coords),
             "y": tuple(c[1] for c in geom.exterior.coords)
         }
-        add_normalized_style_info(expect_data, final_style, "poly")
+        add_normalized_style_info(expect_data, final_style, final_name, "poly")
         expect_data_list.append(expect_data)
         total_plots = 1
+
+    if total_plots > 1:
+        # If we created multiple plots, then all should have a legend group.
+        # But show_legend should be True on the first one, and False on all the others.
+        if final_style.legend_group is None:
+            legend_group = plot_data[pd_before].legendgroup
+            for expect_data in expect_data_list[pd_before:]:
+                expect_data["legendgroup"] = legend_group
+        show_legend = final_name is not None
+        if show_legend:
+            for expect_data in expect_data_list[pd_before:]:
+                expect_data["showlegend"] = show_legend
+                show_legend = False
 
     return total_plots
 
@@ -622,7 +679,7 @@ style_mode_map = {
 }
 
 
-def add_normalized_collection_style_info(geom_coll, geom_expect_data_list, expect_data_list, final_style,
+def add_normalized_collection_style_info(geom_coll, geom_expect_data_list, expect_data_list, final_style, final_name,
                                          plot_data, plot_data_i):
     assert len(geom_coll.geoms) == len(geom_expect_data_list)
 
@@ -631,23 +688,25 @@ def add_normalized_collection_style_info(geom_coll, geom_expect_data_list, expec
         geom_t = type(geom)
 
         if geom_t is shp.Polygon:
-            num_plot = add_normalized_poly_style_info(geom, expect_data_list, final_style, plot_data, plot_data_i)
+            num_plot = add_normalized_poly_style_info(geom, expect_data_list, final_style,
+                                                      final_name, plot_data, plot_data_i)
             plot_data_i += num_plot
 
         elif geom_t is shp.MultiPolygon:
             # Build expected style data for all the plots.  All use the same final_style
             for poly in geom.geoms:
-                num_plot = add_normalized_poly_style_info(poly, expect_data_list, final_style, plot_data, plot_data_i)
+                num_plot = add_normalized_poly_style_info(poly, expect_data_list, final_style, final_name,
+                                                          plot_data, plot_data_i)
                 plot_data_i += num_plot
 
         elif geom_t is shp.GeometryCollection:
-            plot_data_i = add_normalized_collection_style_info(geom, expect_data, expect_data_list, final_style,
-                                                               plot_data, plot_data_i)
+            plot_data_i = add_normalized_collection_style_info(geom, expect_data, expect_data_list,
+                                                               final_style, final_name, plot_data, plot_data_i)
 
         else:
             # All other geometries are handled the same
             style_mode = style_mode_map[geom_t]
-            add_normalized_style_info(expect_data, final_style, style_mode)
+            add_normalized_style_info(expect_data, final_style, final_name, style_mode)
             expect_data_list.append(expect_data)
             plot_data_i += 1
 
@@ -657,7 +716,7 @@ def add_normalized_collection_style_info(geom_coll, geom_expect_data_list, expec
 expected_no_line_style = {"color": "rgba(0,0,0,0)", "width": 0, "dash": None}
 
 
-def add_normalized_style_info(expect_data, style, style_mode):
+def add_normalized_style_info(expect_data, style, name, style_mode):
     """
     Add style info to the expected data, given the style itself, and the style_mode.
     """
@@ -706,8 +765,8 @@ def add_normalized_style_info(expect_data, style, style_mode):
 
     # FIXME: TBD
     expect_data["legendgroup"] = style.legend_group
-    expect_data["name"] = None
-    expect_data["showlegend"] = False
+    expect_data["name"] = name
+    expect_data["showlegend"] = name is not None
 
     if "mode" not in expect_data:
         has_lines = line_style is not None

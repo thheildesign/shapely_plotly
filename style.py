@@ -461,7 +461,7 @@ default_info = GeometryInfo()
 default_info.style = default_style
 
 
-def resolve_info(geom, style, name, legend_group):
+def resolve_info(geom, style, name, legend_group, show_legend):
     """
     Determine the style to use for a particular draw command.
     This will be the passed in style, if not DEFAULT.
@@ -502,5 +502,5 @@ def resolve_info(geom, style, name, legend_group):
     if name is DEFAULT:
         name = info.name
 
-    show_legend = name is not None
+    show_legend = (name is not None) and show_legend
     return style, name, show_legend, legend_group
