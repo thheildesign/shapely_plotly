@@ -6,6 +6,7 @@ import shapely_plotly as shpl
 from abc import ABC, abstractstaticmethod
 from shapely_plotly.tests.utils.run_main import start_end_id
 
+
 # -----------------------------------------------------------------
 # Random coordinates
 # -----------------------------------------------------------------
@@ -147,7 +148,8 @@ class RndGeometry(ABC):
         return
 
     @abstractstaticmethod
-    def get_expected_data_2d(geom, proto_expected_data, final_style, final_name, plot_data, pd_start, expected_data):
+    def get_expected_data_2d(geom, proto_expected_data, final_style, final_name, plot_data, pd_start,
+                             expected_data_list):
         """
         Compute expected_data for the plotted geometry, and add to expected_data list.
         geom - The geometry plotted
@@ -178,7 +180,7 @@ class RndPoint2d(RndGeometry):
         """
         x, y = rnd_coord(xoff, yoff, width, height)
         geom = shp.Point(x, y)
-        proto_expected_data=dict(
+        proto_expected_data = dict(
             dims="2d",
             x=(x,),
             y=(y,)
@@ -186,7 +188,8 @@ class RndPoint2d(RndGeometry):
         return geom, proto_expected_data
 
     @abstractstaticmethod
-    def get_expected_data_2d(geom, proto_expected_data, final_style, final_name, plot_data, pd_start, expected_data):
+    def get_expected_data_2d(geom, proto_expected_data, final_style, final_name, plot_data, pd_start,
+                             expected_data_list):
         """
         Compute expected_data for the plotted geometry, and add to expected_data list.
         geom - The geometry plotted
@@ -198,7 +201,7 @@ class RndPoint2d(RndGeometry):
         expected_data - To be updated with needed expected data.
         """
         add_normalized_style_info(proto_expected_data, final_style, final_name, "point")
-        expected_data.append(proto_expected_data)
+        expected_data_list.append(proto_expected_data)
         return
 
     @abstractstaticmethod
@@ -225,7 +228,8 @@ class RndMultiPoint2d(RndGeometry):
         return geom, proto_expected_data
 
     @abstractstaticmethod
-    def get_expected_data_2d(geom, proto_expected_data, final_style, final_name, plot_data, pd_start, expected_data):
+    def get_expected_data_2d(geom, proto_expected_data, final_style, final_name, plot_data, pd_start,
+                             expected_data_list):
         """
         Compute expected_data for the plotted geometry, and add to expected_data list.
         geom - The geometry plotted
@@ -237,7 +241,7 @@ class RndMultiPoint2d(RndGeometry):
         expected_data - To be updated with needed expected data.
         """
         add_normalized_style_info(proto_expected_data, final_style, final_name, "point")
-        expected_data.append(proto_expected_data)
+        expected_data_list.append(proto_expected_data)
         return
 
     @abstractstaticmethod
@@ -264,7 +268,8 @@ class RndLineString2d(RndGeometry):
         return geom, proto_expected_data
 
     @abstractstaticmethod
-    def get_expected_data_2d(geom, proto_expected_data, final_style, final_name, plot_data, pd_start, expected_data):
+    def get_expected_data_2d(geom, proto_expected_data, final_style, final_name, plot_data, pd_start,
+                             expected_data_list):
         """
         Compute expected_data for the plotted geometry, and add to expected_data list.
         geom - The geometry plotted
@@ -276,7 +281,7 @@ class RndLineString2d(RndGeometry):
         expected_data - To be updated with needed expected data.
         """
         add_normalized_style_info(proto_expected_data, final_style, final_name, "line")
-        expected_data.append(proto_expected_data)
+        expected_data_list.append(proto_expected_data)
         return
 
     @abstractstaticmethod
@@ -313,7 +318,8 @@ class RndLineRing2d(RndGeometry):
         return geom, proto_expected_data
 
     @abstractstaticmethod
-    def get_expected_data_2d(geom, proto_expected_data, final_style, final_name, plot_data, pd_start, expected_data):
+    def get_expected_data_2d(geom, proto_expected_data, final_style, final_name, plot_data, pd_start,
+                             expected_data_list):
         """
         Compute expected_data for the plotted geometry, and add to expected_data list.
         geom - The geometry plotted
@@ -325,13 +331,65 @@ class RndLineRing2d(RndGeometry):
         expected_data - To be updated with needed expected data.
         """
         add_normalized_style_info(proto_expected_data, final_style, final_name, "line")
-        expected_data.append(proto_expected_data)
+        expected_data_list.append(proto_expected_data)
         return
 
     @abstractstaticmethod
     def style_mode():
         return "line"
 
+
+class RndMultiLine2d(RndGeometry):
+    def rnd_shape_2d(xoff, yoff, width, height):
+        """
+        Produce a random shape of the given geometry.
+        Also optionally produce prototype expected data.   This is typically the dimensions
+        and the x/y coordinates, if known.
+        Return (geom, proto_expected_data)
+        """
+
+        n = rnd.randrange(1, 5)
+        xys = [None] * n
+        ex, ey = [], []
+        for i in range(n):
+            x, y = rnd_coords(xoff + (width + 1) * i, yoff, width, height)
+            xys[i] = zip_xy(x, y)
+            if i > 0:
+                ex.append(None)
+                ey.append(None)
+            ex.extend(x)
+            ey.extend(y)
+
+        geom = shp.MultiLineString(xys)
+
+        proto_expected_data = dict(
+            dims="2d",
+            x=tuple(ex),
+            y=tuple(ey)
+        )
+
+        return geom, proto_expected_data
+
+    @abstractstaticmethod
+    def get_expected_data_2d(geom, proto_expected_data, final_style, final_name, plot_data, pd_start,
+                             expected_data_list):
+        """
+        Compute expected_data for the plotted geometry, and add to expected_data list.
+        geom - The geometry plotted
+        proto_expected_data - from rnd_shape_2d.
+        final_style - The style chosen during plotting.
+        final_name - The name assigned during plotting.
+        plot_data - The plots
+        pd_start - The first plot in plot_data belonging to the geometry.
+        expected_data - To be updated with needed expected data.
+        """
+        add_normalized_style_info(proto_expected_data, final_style, final_name, "line")
+        expected_data_list.append(proto_expected_data)
+        return
+
+    @abstractstaticmethod
+    def style_mode():
+        return "line"
 
 
 def do_rnd_geom_plotting(plot_data, expected_data_list, GeomClass, xoff, yoff, width=1.0, height=None):
@@ -395,7 +453,6 @@ def do_test_geom_plot2d_v2(test_num, show, RndGeomClass, test_name):
         norm_data = [normalize_plot_obj(d) for d in plot_data]
 
         compare_object("norm", norm_data, "expected", expect_data_list, f'{test_name}[{test_num}]')
-
 
 
 def rnd_shapely_point2d(expect_data, xoff, yoff, width=1.0, height=None):
@@ -526,6 +583,51 @@ def rnd_shapely_poly_complex(xoff, yoff, width=1.0, height=None):
     return shell_p
 
 
+class RndPolySimple2d(RndGeometry):
+    def rnd_shape_2d(xoff, yoff, width, height):
+        """
+        Produce a random shape of the given geometry.
+        Also optionally produce prototype expected data.   This is typically the dimensions
+        and the x/y coordinates, if known.
+        Return (geom, proto_expected_data)
+        """
+        if rnd.uniform(0.0, 1.0) < 0.2:
+            x, y = rnd_rect_coords(xoff, yoff, width, height)
+        else:
+            x, y = rnd_poly_coords(xoff, yoff, width, height)
+
+        geom = shp.Polygon(shell=zip_xy(x, y))
+
+        if (x[0] != x[-1]) or (y[0] != y[-1]):
+            # Add closing point.
+            x = tuple(x) + (x[0],)
+            y = tuple(y) + (y[0],)
+        else:
+            # Already closed
+            x = tuple(x)
+            y = tuple(y)
+
+        proto_expected_data = dict(
+            dims="2d",
+            x=x,
+            y=y
+        )
+
+        return geom, proto_expected_data
+
+    @abstractstaticmethod
+    def get_expected_data_2d(geom, proto_expected_data, final_style, final_name, plot_data, pd_start,
+                             expected_data_list):
+        add_normalized_style_info(proto_expected_data, final_style, final_name, "poly")
+        expected_data_list.append(proto_expected_data)
+
+        return
+
+    @abstractstaticmethod
+    def style_mode():
+        return "poly"
+
+
 class RndPolyComplex2d(RndGeometry):
     def rnd_shape_2d(xoff, yoff, width, height):
         """
@@ -573,10 +675,11 @@ class RndPolyComplex2d(RndGeometry):
                 shell_p = shp.Polygon(shell=ext_xy, holes=holes)
                 # assert shell_p.is_valid
 
-        return shell_p, None # No proto-type expected data yet.  Depends on the style.
+        return shell_p, None  # No proto-type expected data yet.  Depends on the style.
 
     @abstractstaticmethod
-    def get_expected_data_2d(geom, proto_expected_data, final_style, final_name, plot_data, pd_start, expected_data_list):
+    def get_expected_data_2d(geom, proto_expected_data, final_style, final_name, plot_data, pd_start,
+                             expected_data_list):
         """
         Compute expected_data for the plotted geometry, and add to expected_data list.
 
@@ -662,6 +765,159 @@ class RndPolyComplex2d(RndGeometry):
         return "poly"
 
 
+class RndMultiPoly2d(RndGeometry):
+    def rnd_shape_2d(xoff, yoff, width, height):
+        """
+        Produce a random shape of the given geometry.
+        Also optionally produce prototype expected data.   This is typically the dimensions
+        and the x/y coordinates, if known.
+        Return (geom, proto_expected_data)
+        """
+
+        # Produce 1 to 6 polygons in the multi-poly
+        n = rnd.randrange(1, 6)
+
+        # Arrange in one or two rows of 1 to 3.
+        if n > 3:
+            pheight = height * 0.45
+            ystep = height * 0.55
+            nx = (n + 1) // 2
+        else:
+            nx = n
+            pheight = height
+            ystep = 0.0
+
+        pwidth = (1.0 - 0.1 * (nx - 1)) / nx
+        xstep = pwidth + 0.1
+        pwidth *= width
+        xstep *= width
+
+        # Produce the polygons.
+        geoms = []
+        xpoff = xoff
+        ypoff = yoff
+        for i in range(n):
+            poly = rnd_shapely_poly_complex(xpoff, ypoff, pwidth, pheight)
+            geoms.append(poly)
+            if i == (nx - 1):
+                xpoff = xoff
+                ypoff += ystep
+            else:
+                xpoff += xstep
+
+        geom = shp.MultiPolygon(geoms)
+        return geom, None  # No proto-type expected data yet.  Depends on the style.
+
+    @abstractstaticmethod
+    def get_expected_data_2d(geom, proto_expected_data, final_style, final_name, plot_data, pd_start,
+                             expected_data_list):
+        """
+        Compute expected_data for the plotted geometry, and add to expected_data list.
+
+        Add expected data to expect_data_list for the 1 to 3 plots created by drawing a polygon (geom).
+        Unlike other geometries, polygons do not set dims and x/y as geometry creation time.
+        For polygons, those values are complex and we wait until after the plots are made to create them.
+
+        geom - The geometry plotted
+        proto_expected_data - from rnd_shape_2d.
+        final_style - The style chosen during plotting.
+        final_name - The name assigned during plotting.
+        plot_data - The plots
+        pd_start - The first plot in plot_data belonging to the geometry.
+        expected_data - To be updated with needed expected data.
+        """
+
+        # Build expected style data for all the plots.  All use the same final_style
+        for poly in geom.geoms:
+            RndPolyComplex2d.get_expected_data_2d(poly, proto_expected_data, final_style, final_name, plot_data,
+                                                  len(expected_data_list), expected_data_list)
+        return
+
+    @abstractstaticmethod
+    def style_mode():
+        return "poly"
+
+
+class RndGeomCollection2d(RndGeometry):
+    def rnd_shape_2d(xoff, yoff, width, height):
+        """
+        Produce a random shape of the given geometry.
+        Also optionally produce prototype expected data.   This is typically the dimensions
+        and the x/y coordinates, if known.
+        Return (geom, proto_expected_data)
+        """
+
+        return RndGeomCollection2d.__rnd_shape_2d(xoff, yoff, width, height, 3)
+
+    @staticmethod
+    def __rnd_shape_2d(xoff, yoff, width, height, max_depth):
+        n = rnd.randrange(1, 5)
+        geoms = []
+        protos = []
+        if max_depth > 0:
+            rnd_classes = rnd_geom_classes
+        else:
+            # Exclude geometry collection
+            rnd_classes = rnd_geom_classes[:-1]
+
+        for i in range(n):
+            rnd_class = rnd.choice(rnd_classes)
+            if rnd_class is RndGeomCollection2d:
+                # Geometry collection needs the depth parameter to prevent run-away
+                geom, proto_expected_data = rnd_class.__rnd_shape_2d(xoff, yoff, width, height, max_depth - 1)
+            else:
+                geom, proto_expected_data = rnd_class.rnd_shape_2d(xoff, yoff, width, height)
+
+            geoms.append(geom)
+            protos.append((rnd_class, proto_expected_data))
+
+        geom = shp.GeometryCollection(geoms)
+        return geom, protos
+
+    @abstractstaticmethod
+    def get_expected_data_2d(geom, proto_expected_data, final_style, final_name, plot_data, pd_start,
+                             expected_data_list):
+        """
+        Compute expected_data for the plotted geometry, and add to expected_data list.
+
+        Add expected data to expect_data_list for the 1 to 3 plots created by drawing a polygon (geom).
+        Unlike other geometries, polygons do not set dims and x/y as geometry creation time.
+        For polygons, those values are complex and we wait until after the plots are made to create them.
+
+        geom - The geometry plotted
+        proto_expected_data - from rnd_shape_2d.
+        final_style - The style chosen during plotting.
+        final_name - The name assigned during plotting.
+        plot_data - The plots
+        pd_start - The first plot in plot_data belonging to the geometry.
+        expected_data - To be updated with needed expected data.
+        """
+
+        # Build expected style data for all the plots.  All use the same final_style
+        for geom, (rnd_class, geom_proto) in zip(geom.geoms, proto_expected_data):
+            rnd_class.get_expected_data_2d(geom, geom_proto, final_style, final_name, plot_data,
+                                           len(expected_data_list), expected_data_list)
+
+        return
+
+    @abstractstaticmethod
+    def style_mode():
+        return "collection"
+
+
+rnd_geom_classes = [
+    RndPoint2d,
+    RndMultiPoint2d,
+    RndLineString2d,
+    RndLineRing2d,
+    RndMultiLine2d,
+    RndPolySimple2d,
+    RndPolyComplex2d,
+    RndMultiPoly2d,
+    RndGeomCollection2d
+]
+
+
 def rnd_shapely_geom_collection(expect_data_list, max_depth, xoff, yoff, width=1.0, height=None):
     n = rnd.randrange(1, 5)
     geoms = []
@@ -677,11 +933,11 @@ def rnd_shapely_geom_collection(expect_data_list, max_depth, xoff, yoff, width=1
         if rnd_shapely_f is rnd_shapely_poly_complex:
             geom = rnd_shapely_poly_complex(xoff, yoff, width, height)
             geoms.append(geom)
-            expect_data_list.append([]) # Fill in expected data later
+            expect_data_list.append([])  # Fill in expected data later
         elif rnd_shapely_f is rnd_shapely_geom_collection:
             expect_data_sub_list = []
-            geom = rnd_shapely_geom_collection(expect_data_sub_list, max_depth-1, xoff, yoff, width, height)
-            expect_data_list.append(expect_data_sub_list) # Fill in expected data later
+            geom = rnd_shapely_geom_collection(expect_data_sub_list, max_depth - 1, xoff, yoff, width, height)
+            expect_data_list.append(expect_data_sub_list)  # Fill in expected data later
             geoms.append(geom)
         else:
             # Everything else works the same.
@@ -693,7 +949,9 @@ def rnd_shapely_geom_collection(expect_data_list, max_depth, xoff, yoff, width=1
     geom_coll = shp.GeometryCollection(geoms)
     return geom_coll
 
+
 # List of geometry building functions.  Used by the above.
+# FIXME: Missing multi-polygon.
 rnd_shapely_funcs = [
     rnd_shapely_point2d,
     rnd_shapely_multipoint2d,
@@ -704,6 +962,7 @@ rnd_shapely_funcs = [
     rnd_shapely_poly_complex,
     rnd_shapely_geom_collection
 ]
+
 
 # -----------------------------------------------------------------
 # Random geometry plotting functions - 2D
@@ -725,23 +984,23 @@ def rnd_generic_plot2d(plot_data, xoff, yoff, width, height, rnd_shapely_f, styl
 
 
 def rnd_multipoint_plot2d(plot_data, xoff, yoff, width=1.0, height=None):
-    return rnd_generic_plot2d(plot_data, xoff,yoff, width, height, rnd_shapely_multipoint2d, "point")
+    return rnd_generic_plot2d(plot_data, xoff, yoff, width, height, rnd_shapely_multipoint2d, "point")
 
 
 def rnd_linestring_plot2d(plot_data, xoff, yoff, width=1.0, height=None):
-    return rnd_generic_plot2d(plot_data, xoff,yoff, width, height, rnd_shapely_linestring, "line")
+    return rnd_generic_plot2d(plot_data, xoff, yoff, width, height, rnd_shapely_linestring, "line")
 
 
 def rnd_multiline_plot2d(plot_data, xoff, yoff, width=1.0, height=None):
-    return rnd_generic_plot2d(plot_data, xoff,yoff, width, height, rnd_shapely_multiline, "line")
+    return rnd_generic_plot2d(plot_data, xoff, yoff, width, height, rnd_shapely_multiline, "line")
 
 
 def rnd_linering_plot2d(plot_data, xoff, yoff, width=1.0, height=None):
-    return rnd_generic_plot2d(plot_data, xoff,yoff, width, height, rnd_shapely_linering, "line")
+    return rnd_generic_plot2d(plot_data, xoff, yoff, width, height, rnd_shapely_linering, "line")
 
 
 def rnd_poly_simple_plot2d(plot_data, xoff, yoff, width=1.0, height=None):
-    return rnd_generic_plot2d(plot_data, xoff,yoff, width, height, rnd_shapely_poly_simple, "poly")
+    return rnd_generic_plot2d(plot_data, xoff, yoff, width, height, rnd_shapely_poly_simple, "poly")
 
 
 def rnd_poly_complex_plot2d(expect_data_list, plot_data, xoff, yoff, width=1.0, height=None):
@@ -802,7 +1061,7 @@ def rnd_multipoly_plot2d(expect_data_list, plot_data, xoff, yoff, width=1.0, hei
     # MultiPoly plots use a legend group to tie all poly's to the same legend entry.  We capture this from
     # the first plot in the series, and insist all plots use the same legend group.
     # FIXME: Very duplicate logic else.
-    if (data_end-data_start) > 1:
+    if (data_end - data_start) > 1:
         if final_style.legend_group is None:
             legend_group = plot_data[data_start].legendgroup
             for expect_data in expect_data_list[data_start:]:
@@ -818,7 +1077,6 @@ def rnd_multipoly_plot2d(expect_data_list, plot_data, xoff, yoff, width=1.0, hei
 
 
 def rnd_geometry_collection_plot2d(expect_data_list, plot_data, xoff, yoff, width=1.0, height=None):
-
     # We first build expected data into a local list.
     # This is because some cases have to be unrolled.
     geom_expect_data_list = []
@@ -851,6 +1109,7 @@ def rnd_geometry_collection_plot2d(expect_data_list, plot_data, xoff, yoff, widt
                 show_legend = False
 
     return geom_coll
+
 
 # -----------------------------------------------------------------
 # Random plotting helper functions - 2D
@@ -1059,14 +1318,6 @@ def add_normalized_poly_style_info(geom, expect_data_list, final_style, final_na
                 show_legend = False
 
     return total_plots
-
-add_norm_map = {
-    shp.Polygon: None, # Nonstandard.  Use add_normalized_poly_style_info,
-    shp.MultiPolygon: None, # Nonstandard
-    shp.GeometryCollection: None, # Nonstandard
-
-
-}
 
 
 style_mode_map = {
