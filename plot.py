@@ -599,7 +599,7 @@ def plot_multiline2d(sh_multiline, data, style=DEFAULT, name=DEFAULT, legend_gro
     Plot Multi-line string - 2D.
 
     :param sh_multiline: Shapely point object.
-    :param data: List of plotly graph objects.  Graph is appended to this.
+    :param data: List of plotly graph objects.  Graph is appcd ended to this.
     :param style:  shapely_plotly Style object.  Overrides any style defined for sh_multiline.
     :param name:   Name for the object in Plotly plot.  Overrides any name defined for the sh_multiline.
     :param legend_group   Legend group to use (groups multiple items under a single legend).  Overrides style.

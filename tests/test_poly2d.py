@@ -5,7 +5,8 @@ Check Point 2D plotting.
 import random as rnd
 from shapely_plotly.tests.utils.rnd_shapes import (
     rnd_poly_simple_plot2d, fixed_rect_coords, zip_xy, rnd_poly_complex_plot2d, rnd_multipoly_plot2d,
-    rnd_geometry_collection_plot2d
+    rnd_geometry_collection_plot2d,
+    do_test_geom_plot2d_v2, RndPolyComplex2d
 )
 
 from shapely_plotly.tests.utils.run_main import run_main, TDef, start_end_id
@@ -121,7 +122,8 @@ def test_poly_complex_plot2d(test_num=None, show=False):
     """
     s, e = start_end_id(test_num, 100, 200)
     for i in range(s, e):
-        do_test_poly_plot2d(i, show, rnd_poly_complex_plot2d, "test_poly_complex_plot2d")
+        do_test_geom_plot2d_v2(i, show, RndPolyComplex2d, "test_poly_complex_plot2d")
+        # do_test_poly_plot2d(i, show, rnd_poly_complex_plot2d, "test_poly_complex_plot2d")
     return
 
 

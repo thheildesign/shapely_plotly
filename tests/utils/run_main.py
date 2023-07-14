@@ -69,7 +69,7 @@ Defined tests are:"""
                 test.run(args)
                 print()
                 num_found += 1
-                break
+
         if num_found == 0:
             print(f"\nTest {repr(test_re)} not found.")
 
