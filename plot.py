@@ -572,7 +572,7 @@ def plot_multiline3d(sh_multiline, data, style=DEFAULT, name=DEFAULT, legend_gro
         if l.has_z:
             zs[index:index + n] = (c[2] for c in coords)
         else:
-            zs[index:index + n] = 0.0
+            zs[index:index + n] = (0.0,) * n
 
         index += n
 

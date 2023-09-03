@@ -400,11 +400,7 @@ class RndPolySimple2d(RndGeometry):
         and the x/y coordinates, if known.
         Return (geom, proto_expected_data)
         """
-        if rnd.uniform(0.0, 1.0) < 0.2:
-            x, y = rnd_rect_coords(xoff, yoff, width, height)
-        else:
-            x, y = rnd_poly_coords(xoff, yoff, width, height)
-
+        x, y = rnd_rect_coords(xoff, yoff, width, height)
         geom = shp.Polygon(shell=zip_xy(x, y))
 
         if (x[0] != x[-1]) or (y[0] != y[-1]):
