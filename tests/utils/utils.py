@@ -34,6 +34,16 @@ norm_fields_2d = [
     "y"
 ]
 
+norm_fields_3d = [
+    "hovertext",
+    "legendgroup",
+    "mode",
+    "name",
+    "showlegend",
+    "x",
+    "y",
+    "z"
+]
 
 def normalize_plot_obj(plot_obj):
     """
@@ -48,16 +58,11 @@ def normalize_plot_obj(plot_obj):
         assert isinstance(plot_obj, graph.Scatter3d)
         d["dims"] = "3d"
         is_3d = True
-        norm_fields = "fixme"
+        norm_fields = norm_fields_3d
 
     # Grab all the easy fields
     for field in norm_fields:
         d[field] = getattr(plot_obj, field)
-
-    # Polygons will sometimes be labled as fill toself even when there is no fill color.
-    # In this case we ignore it, because filling with no fill color will not fill.  So we normalize it to None
-    fill = plot_obj.fill
-    d["fill"] = None if (plot_obj.fillcolor is None) else fill
 
     # Normalize line and marker styles to dictionaries
     mode = d["mode"]

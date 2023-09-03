@@ -392,197 +392,6 @@ class RndMultiLine2d(RndGeometry):
         return "line"
 
 
-def do_rnd_geom_plotting(plot_data, expected_data_list, GeomClass, xoff, yoff, width=1.0, height=None):
-    if height is None:
-        height = width
-
-    assert len(plot_data) == len(expected_data_list)
-
-    # First build the geometry, and get initial expected data
-    geom, proto_expected_data = GeomClass.rnd_shape_2d(xoff, yoff, width, height)
-
-    pd_start = len(plot_data)
-
-    # Now plot the geometry.
-    final_style, final_name = rnd_style_plot2d(geom, plot_data, GeomClass.style_mode())
-
-    # Next, build the expected data.
-    GeomClass.get_expected_data_2d(geom, proto_expected_data, final_style, final_name,
-                                   plot_data, pd_start, expected_data_list)
-
-    assert len(plot_data) == len(expected_data_list)
-
-    # All geometries work the same.  If multiple plots are needed, legend group and show legend are manipulated
-    # to make them all under a single legend entry.
-    num_plot = len(plot_data) - pd_start
-    if num_plot > 1:
-        if final_style.legend_group is None:
-            # The legend group was generated randomly.  Get it from the first plot and expect all to be the same.
-            legend_group = plot_data[pd_start].legendgroup
-            for expect_data in expected_data_list[pd_start:]:
-                expect_data["legendgroup"] = legend_group
-
-        # Only first plot has show_legend = True
-        show_legend = final_name is not None
-        if show_legend:
-            for expect_data in expected_data_list[pd_start:]:
-                expect_data["showlegend"] = show_legend
-                show_legend = False
-
-    return
-
-
-def do_test_geom_plot2d_v2(test_num, show, RndGeomClass, test_name):
-    """
-    Generic self-checking random test for many geometries - 2D.  One random test.
-    """
-    test_start, test_end = start_end_id(test_num, 100, 200)
-    for test_num in range(test_start, test_end):
-        rnd.seed(test_num)
-
-        plot_data = []
-        expect_data_list = []
-        n = rnd.randrange(1, 4)
-
-        for i in range(n):
-            do_rnd_geom_plotting(plot_data, expect_data_list, RndGeomClass, -2.0, 2.0, 4.0, 4.0)
-
-        if show:
-            shpl.show2d(plot_data)
-
-        norm_data = [normalize_plot_obj(d) for d in plot_data]
-
-        compare_object("norm", norm_data, "expected", expect_data_list, f'{test_name}[{test_num}]')
-
-
-def rnd_shapely_point2d(expect_data, xoff, yoff, width=1.0, height=None):
-    x, y = rnd_coord(xoff, yoff, width, height)
-    p = shp.Point(x, y)
-    expect_data["dims"] = "2d"
-    expect_data["x"] = (x,)
-    expect_data["y"] = (y,)
-    return p
-
-
-def rnd_shapely_multipoint2d(expect_data, xoff, yoff, width=1.0, height=None):
-    x, y = rnd_coords(xoff, yoff, width, height)
-    p = shp.MultiPoint(zip_xy(x, y))
-    expect_data["dims"] = "2d"
-    expect_data["x"] = tuple(x)
-    expect_data["y"] = tuple(y)
-    return p
-
-
-def rnd_shapely_linestring(expect_data, xoff, yoff, width=1.0, height=None):
-    x, y = rnd_coords(xoff, yoff, width, height)
-    p = shp.LineString(zip_xy(x, y))
-    expect_data["dims"] = "2d"
-    expect_data["x"] = tuple(x)
-    expect_data["y"] = tuple(y)
-    return p
-
-
-def rnd_shapely_multiline(expect_data, xoff, yoff, width=1.0, height=None):
-    n = rnd.randrange(1, 5)
-    xys = [None] * n
-    ex, ey = [], []
-    for i in range(n):
-        x, y = rnd_coords(xoff + (width + 1) * i, yoff, width, height)
-        xys[i] = zip_xy(x, y)
-        if i > 0:
-            ex.append(None)
-            ey.append(None)
-        ex.extend(x)
-        ey.extend(y)
-    expect_data["dims"] = "2d"
-    expect_data["x"] = tuple(ex)
-    expect_data["y"] = tuple(ey)
-
-    p = shp.MultiLineString(xys)
-    return p
-
-
-def rnd_shapely_linering(expect_data, xoff, yoff, width=1.0, height=None):
-    x, y = rnd_coords(xoff, yoff, width, height)
-    p = shp.LinearRing(zip_xy(x, y))
-    expect_data["dims"] = "2d"
-    if (x[0] != x[-1]) or (y[0] != y[-1]):
-        # Add closing point.
-        expect_data["x"] = tuple(x) + (x[0],)
-        expect_data["y"] = tuple(y) + (y[0],)
-    else:
-        # Already closed
-        expect_data["x"] = tuple(x)
-        expect_data["y"] = tuple(y)
-
-    return p
-
-
-def rnd_shapely_poly_simple(expect_data, xoff, yoff, width=1.0, height=None):
-    if rnd.uniform(0.0, 1.0) < 0.2:
-        x, y = rnd_rect_coords(xoff, yoff, width, height)
-    else:
-        x, y = rnd_poly_coords(xoff, yoff, width, height)
-
-    p = shp.Polygon(shell=zip_xy(x, y))
-    expect_data["dims"] = "2d"
-    if (x[0] != x[-1]) or (y[0] != y[-1]):
-        # Add closing point.
-        expect_data["x"] = tuple(x) + (x[0],)
-        expect_data["y"] = tuple(y) + (y[0],)
-    else:
-        # Already closed
-        expect_data["x"] = tuple(x)
-        expect_data["y"] = tuple(y)
-    return p
-
-
-def rnd_shapely_poly_complex(xoff, yoff, width=1.0, height=None):
-    if height is None:
-        height = width
-
-    # Generate the hull
-    while True:
-        ext_x, ext_y = rnd_poly_coords(xoff, yoff, width, height)
-        ext_xy = zip_xy(ext_x, ext_y)
-        shell_p = shp.Polygon(shell=ext_xy)
-        if shell_p.is_valid:
-            break
-
-    num_int = rnd.randrange(0, 10)
-    if num_int > 0:
-        # Build a list of hole positions.
-        hoffsets = []
-        for hx in range(3):
-            hxoff = xoff + hx * width * 0.3 + width * 0.1
-            for hy in range(3):
-                hyoff = yoff + hy * height * 0.3 + height * 0.1
-                hoffsets.append((hxoff, hyoff))
-
-        # Scramble it.
-        rnd.shuffle(hoffsets)
-
-        holes = []
-        for (hx, hy) in hoffsets[:num_int]:
-            hole_x, hole_y = rnd_poly_coords(hx, hy, width * 0.2, height * 0.2)
-            hole_p = shp.Polygon(shell=zip_xy(hole_x, hole_y))
-            if not hole_p.is_valid:
-                # Bad hole. skip.
-                continue
-
-            if not shell_p.contains(hole_p):
-                # Hole not contained.
-                continue
-
-            holes.append(zip_xy(hole_x, hole_y))
-
-        if len(holes) > 0:
-            shell_p = shp.Polygon(shell=ext_xy, holes=holes)
-            # assert shell_p.is_valid
-
-    return shell_p
-
-
 class RndPolySimple2d(RndGeometry):
     def rnd_shape_2d(xoff, yoff, width, height):
         """
@@ -797,7 +606,7 @@ class RndMultiPoly2d(RndGeometry):
         xpoff = xoff
         ypoff = yoff
         for i in range(n):
-            poly = rnd_shapely_poly_complex(xpoff, ypoff, pwidth, pheight)
+            poly, _ = RndPolyComplex2d.rnd_shape_2d(xpoff, ypoff, pwidth, pheight)
             geoms.append(poly)
             if i == (nx - 1):
                 xpoff = xoff
@@ -918,237 +727,73 @@ rnd_geom_classes = [
 ]
 
 
-def rnd_shapely_geom_collection(expect_data_list, max_depth, xoff, yoff, width=1.0, height=None):
-    n = rnd.randrange(1, 5)
-    geoms = []
 
-    if max_depth > 0:
-        funcs = rnd_shapely_funcs
-    else:
-        # Exclude geometry collection
-        funcs = rnd_shapely_funcs[:-1]
-
-    for i in range(n):
-        rnd_shapely_f = rnd.choice(funcs)
-        if rnd_shapely_f is rnd_shapely_poly_complex:
-            geom = rnd_shapely_poly_complex(xoff, yoff, width, height)
-            geoms.append(geom)
-            expect_data_list.append([])  # Fill in expected data later
-        elif rnd_shapely_f is rnd_shapely_geom_collection:
-            expect_data_sub_list = []
-            geom = rnd_shapely_geom_collection(expect_data_sub_list, max_depth - 1, xoff, yoff, width, height)
-            expect_data_list.append(expect_data_sub_list)  # Fill in expected data later
-            geoms.append(geom)
-        else:
-            # Everything else works the same.
-            expect_data = {}
-            geom = rnd_shapely_f(expect_data, xoff, yoff, width, height)
-            geoms.append(geom)
-            expect_data_list.append(expect_data)
-
-    geom_coll = shp.GeometryCollection(geoms)
-    return geom_coll
-
-
-# List of geometry building functions.  Used by the above.
-# FIXME: Missing multi-polygon.
-rnd_shapely_funcs = [
-    rnd_shapely_point2d,
-    rnd_shapely_multipoint2d,
-    rnd_shapely_linestring,
-    rnd_shapely_multiline,
-    rnd_shapely_linering,
-    rnd_shapely_poly_simple,
-    rnd_shapely_poly_complex,
-    rnd_shapely_geom_collection
-]
-
-
-# -----------------------------------------------------------------
-# Random geometry plotting functions - 2D
-# -----------------------------------------------------------------
-
-
-def rnd_generic_plot2d(plot_data, xoff, yoff, width, height, rnd_shapely_f, style_mode):
-    """
-    Generic random create and plot function for most geometry types.
-    """
-    expect_data = {}
-    p = rnd_shapely_f(expect_data, xoff, yoff, width, height)
-    rnd_plot2d(p, expect_data, plot_data, style_mode)
-    return expect_data
-
-
-# def rnd_point_plot2d(plot_data, xoff, yoff, width=1.0, height=None):
-#     return rnd_generic_plot2d(plot_data, xoff,yoff, width, height, rnd_shapely_point2d, "point")
-
-
-def rnd_multipoint_plot2d(plot_data, xoff, yoff, width=1.0, height=None):
-    return rnd_generic_plot2d(plot_data, xoff, yoff, width, height, rnd_shapely_multipoint2d, "point")
-
-
-def rnd_linestring_plot2d(plot_data, xoff, yoff, width=1.0, height=None):
-    return rnd_generic_plot2d(plot_data, xoff, yoff, width, height, rnd_shapely_linestring, "line")
-
-
-def rnd_multiline_plot2d(plot_data, xoff, yoff, width=1.0, height=None):
-    return rnd_generic_plot2d(plot_data, xoff, yoff, width, height, rnd_shapely_multiline, "line")
-
-
-def rnd_linering_plot2d(plot_data, xoff, yoff, width=1.0, height=None):
-    return rnd_generic_plot2d(plot_data, xoff, yoff, width, height, rnd_shapely_linering, "line")
-
-
-def rnd_poly_simple_plot2d(plot_data, xoff, yoff, width=1.0, height=None):
-    return rnd_generic_plot2d(plot_data, xoff, yoff, width, height, rnd_shapely_poly_simple, "poly")
-
-
-def rnd_poly_complex_plot2d(expect_data_list, plot_data, xoff, yoff, width=1.0, height=None):
-    p = rnd_shapely_poly_complex(xoff, yoff, width, height)
-    rnd_poly_plot2d(p, expect_data_list, plot_data)
-    return
-
-
-def rnd_multipoly_plot2d(expect_data_list, plot_data, xoff, yoff, width=1.0, height=None):
+def do_rnd_geom_plotting(plot_data, expected_data_list, GeomClass, xoff, yoff, width=1.0, height=None):
     if height is None:
         height = width
 
-    n = rnd.randrange(1, 6)
-    if n > 3:
-        pheight = height * 0.45
-        ystep = height * 0.55
-        nx = (n + 1) // 2
-    else:
-        nx = n
-        pheight = height
-        ystep = 0.0
+    assert len(plot_data) == len(expected_data_list)
 
-    pwidth = (1.0 - 0.1 * (nx - 1)) / nx
-    xstep = pwidth + 0.1
-    pwidth *= width
-    xstep *= width
+    # First build the geometry, and get initial expected data
+    geom, proto_expected_data = GeomClass.rnd_shape_2d(xoff, yoff, width, height)
 
-    geoms = []
-    xpoff = xoff
-    ypoff = yoff
-    for i in range(n):
-        poly = rnd_shapely_poly_complex(xpoff, ypoff, pwidth, pheight)
-        geoms.append(poly)
-        if i == (nx - 1):
-            xpoff = xoff
-            ypoff += ystep
-        else:
-            xpoff += xstep
+    pd_start = len(plot_data)
 
-    p = shp.MultiPolygon(geoms)
+    # Now plot the geometry.
+    final_style, final_name = rnd_style_plot2d(geom, plot_data, GeomClass.style_mode())
 
-    data_start = len(plot_data)
-    assert data_start == len(expect_data_list)
+    # Next, build the expected data.
+    GeomClass.get_expected_data_2d(geom, proto_expected_data, final_style, final_name,
+                                   plot_data, pd_start, expected_data_list)
 
-    pd_before = data_start
-    # First we just plot the polygon collection, and get the style used.
-    final_style, final_name = rnd_style_plot2d(p, plot_data, "poly")
-    data_end = len(plot_data)
+    assert len(plot_data) == len(expected_data_list)
 
-    # Build expected style data for all the plots.  All use the same final_style
-    for poly in p.geoms:
-        num_plot = add_normalized_poly_style_info(poly, expect_data_list, final_style, final_name, plot_data, pd_before)
-        pd_before += num_plot
-
-    assert pd_before == data_end  # Number of plots created and expected should be consistent.
-    assert data_end == len(expect_data_list)
-
-    # MultiPoly plots use a legend group to tie all poly's to the same legend entry.  We capture this from
-    # the first plot in the series, and insist all plots use the same legend group.
-    # FIXME: Very duplicate logic else.
-    if (data_end - data_start) > 1:
+    # All geometries work the same.  If multiple plots are needed, legend group and show legend are manipulated
+    # to make them all under a single legend entry.
+    num_plot = len(plot_data) - pd_start
+    if num_plot > 1:
         if final_style.legend_group is None:
-            legend_group = plot_data[data_start].legendgroup
-            for expect_data in expect_data_list[data_start:]:
+            # The legend group was generated randomly.  Get it from the first plot and expect all to be the same.
+            legend_group = plot_data[pd_start].legendgroup
+            for expect_data in expected_data_list[pd_start:]:
                 expect_data["legendgroup"] = legend_group
 
+        # Only first plot has show_legend = True
         show_legend = final_name is not None
         if show_legend:
-            for expect_data in expect_data_list[data_start:]:
+            for expect_data in expected_data_list[pd_start:]:
                 expect_data["showlegend"] = show_legend
                 show_legend = False
 
-    return p
+    return
 
 
-def rnd_geometry_collection_plot2d(expect_data_list, plot_data, xoff, yoff, width=1.0, height=None):
-    # We first build expected data into a local list.
-    # This is because some cases have to be unrolled.
-    geom_expect_data_list = []
+def do_test_geom_plot2d_v2(test_num, show, RndGeomClass, test_name):
+    """
+    Generic self-checking random test for many geometries - 2D.  One random test.
+    """
+    test_start, test_end = start_end_id(test_num, 100, 200)
+    for test_num in range(test_start, test_end):
+        rnd.seed(test_num)
 
-    pd_before = len(plot_data)
+        plot_data = []
+        expect_data_list = []
+        n = rnd.randrange(1, 4)
 
-    # Build the collection.
-    geom_coll = rnd_shapely_geom_collection(geom_expect_data_list, 2, xoff, yoff, width, height)
+        for i in range(n):
+            do_rnd_geom_plotting(plot_data, expect_data_list, RndGeomClass, -2.0, 2.0, 4.0, 4.0)
 
-    # Plot the collection.
-    final_style, final_name = rnd_style_plot2d(geom_coll, plot_data, "collection")
+        if show:
+            shpl.show2d(plot_data)
 
-    # Now we go and fill in the expected data for all the elements.
-    add_normalized_collection_style_info(geom_coll, geom_expect_data_list, expect_data_list,
-                                         final_style, final_name, plot_data, pd_before)
+        norm_data = [normalize_plot_obj(d) for d in plot_data]
 
-    # FIXME: Duplicated logic elsewhere.
-    # Also this should b in the add_normalized call above.
-    if (len(plot_data) - pd_before) > 1:
-        if final_style.legend_group is None:
-            # Had to create a random legend group.  Must copy across all the expected data.
-            legend_group = plot_data[pd_before].legendgroup
-            for expect_data in expect_data_list[pd_before:]:
-                expect_data["legendgroup"] = legend_group
-
-        if final_name is not None:
-            show_legend = True
-            for expect_data in expect_data_list[pd_before:]:
-                expect_data["showlegend"] = show_legend
-                show_legend = False
-
-    return geom_coll
+        compare_object("norm", norm_data, "expected", expect_data_list, f'{test_name}[{test_num}]')
 
 
 # -----------------------------------------------------------------
 # Random plotting helper functions - 2D
 # -----------------------------------------------------------------
-
-
-def rnd_plot2d(geom, expect_data, plot_data, style_mode):
-    """
-    Randomly plot-2D a geometry object, applying a random style in one of four ways.
-
-    with_fill - Whether the geometry needs a fill color.
-    """
-
-    final_style, final_name = rnd_style_plot2d(geom, plot_data, style_mode)
-    add_normalized_style_info(expect_data, final_style, final_name, style_mode)
-    return
-
-
-def rnd_poly_plot2d(geom, expect_data_list, plot_data):
-    """
-    rnd_plot2d for polygons.  Polygons may create 1 to 3 plots depending on their needs.
-    This function handles special cases for them.
-
-    geom - The polygon to plot.
-    expect_data_list - A list of expect_data.  It will be appended to.
-    plot_data - Plot data.  Appended to.
-    """
-
-    pd_before = len(plot_data)
-    # First we just plot the polygon.
-    final_style, final_name = rnd_style_plot2d(geom, plot_data, "poly")
-    pd_after = len(plot_data)
-    num_plot = pd_after - pd_before
-    assert num_plot >= 1
-    assert num_plot <= 3
-
-    add_normalized_poly_style_info(geom, expect_data_list, final_style, final_name,
-                                   plot_data, pd_before, num_plot=num_plot)
-    return
 
 
 # Style_mode decoder map.
@@ -1229,138 +874,6 @@ def rnd_style_plot2d(geom, plot_data, style_mode):
     geom.plotly_draw2d(plot_data, style=draw_style, name=draw_name)
 
     return final_style, final_name
-
-
-def add_normalized_poly_style_info(geom, expect_data_list, final_style, final_name,
-                                   plot_data, pd_before, num_plot=None):
-    """
-    Add expected data to expect_data_list for the 1 to 3 plots created by drawing a polygon (geom).
-    Unlike other geometries, polygons do not set dims and x/y as geometry creation time.
-    For polygons, those values are complex and we wait until after the plots are made to create them.
-    """
-    if len(geom.interiors) > 0:
-        # Has interioriors.  We have 1 to 3 plots.
-        total_plots = 0
-
-        # 1) Fill plot:
-        if final_style.fill_color is not None:
-            # For x,y I'm just going to take the polygon's x/ys for expected values.
-            # This is a non-test.  I could rebuild the x/y lists, but it would just be repeating the
-            # same code already in the polygon plot function.
-            fill_plot_data = plot_data[pd_before]
-            expect_data = {
-                "dims": "2d",
-                "x": tuple(fill_plot_data.x),
-                "y": tuple(fill_plot_data.y)
-            }
-
-            assert len(fill_plot_data.x) == \
-                   len(geom.exterior.xy[0]) + len(geom.interiors) + sum(len(i.xy[0]) for i in geom.interiors)
-
-            add_normalized_style_info(expect_data, final_style, final_name, "poly_fill")
-            expect_data_list.append(expect_data)
-            total_plots += 1
-
-        # 2) Exterior plot.
-        if (final_style.line_style is not None) or (final_style.vertex_style is not None):
-            ext = geom.exterior
-            ext_x, ext_y = ext.xy
-            expect_data = {
-                "dims": "2d",
-                "x": tuple(ext_x),
-                "y": tuple(ext_y)
-            }
-            add_normalized_style_info(expect_data, final_style, final_name, "line")
-            expect_data_list.append(expect_data)
-            total_plots += 1
-
-        # 3) Interiors plot.
-        if (final_style.hole_line_style is not None) or (final_style.hole_vertex_style is not None):
-            # Again, we just take the plot's xy coordinates.
-            hole_plot_data = plot_data[pd_before + total_plots]
-            expect_data = {
-                "dims": "2d",
-                "x": tuple(hole_plot_data.x),
-                "y": tuple(hole_plot_data.y)
-            }
-            assert len(hole_plot_data.x) == \
-                   len(geom.interiors) + sum(len(i.xy[0]) for i in geom.interiors) - 1
-
-            add_normalized_style_info(expect_data, final_style, final_name, "hole")
-            expect_data_list.append(expect_data)
-            total_plots += 1
-
-        assert (num_plot is None) or (num_plot == total_plots)
-
-    else:
-        # No interiors.  Just the one plot, and we can build just a single expected value like normal.
-        assert (num_plot is None) or (num_plot == 1)
-        expect_data = {
-            "dims": "2d",
-            "x": tuple(c[0] for c in geom.exterior.coords),
-            "y": tuple(c[1] for c in geom.exterior.coords)
-        }
-        add_normalized_style_info(expect_data, final_style, final_name, "poly")
-        expect_data_list.append(expect_data)
-        total_plots = 1
-
-    if total_plots > 1:
-        # If we created multiple plots, then all should have a legend group.
-        # But show_legend should be True on the first one, and False on all the others.
-        if final_style.legend_group is None:
-            legend_group = plot_data[pd_before].legendgroup
-            for expect_data in expect_data_list[pd_before:]:
-                expect_data["legendgroup"] = legend_group
-        show_legend = final_name is not None
-        if show_legend:
-            for expect_data in expect_data_list[pd_before:]:
-                expect_data["showlegend"] = show_legend
-                show_legend = False
-
-    return total_plots
-
-
-style_mode_map = {
-    shp.Point: "point",
-    shp.MultiPoint: "point",
-    shp.LineString: "line",
-    shp.LinearRing: "line",
-    shp.MultiLineString: "line"
-}
-
-
-def add_normalized_collection_style_info(geom_coll, geom_expect_data_list, expect_data_list, final_style, final_name,
-                                         plot_data, plot_data_i):
-    assert len(geom_coll.geoms) == len(geom_expect_data_list)
-
-    for geom_i, geom in enumerate(geom_coll.geoms):
-        expect_data = geom_expect_data_list[geom_i]
-        geom_t = type(geom)
-
-        if geom_t is shp.Polygon:
-            num_plot = add_normalized_poly_style_info(geom, expect_data_list, final_style,
-                                                      final_name, plot_data, plot_data_i)
-            plot_data_i += num_plot
-
-        elif geom_t is shp.MultiPolygon:
-            # Build expected style data for all the plots.  All use the same final_style
-            for poly in geom.geoms:
-                num_plot = add_normalized_poly_style_info(poly, expect_data_list, final_style, final_name,
-                                                          plot_data, plot_data_i)
-                plot_data_i += num_plot
-
-        elif geom_t is shp.GeometryCollection:
-            plot_data_i = add_normalized_collection_style_info(geom, expect_data, expect_data_list,
-                                                               final_style, final_name, plot_data, plot_data_i)
-
-        else:
-            # All other geometries are handled the same
-            style_mode = style_mode_map[geom_t]
-            add_normalized_style_info(expect_data, final_style, final_name, style_mode)
-            expect_data_list.append(expect_data)
-            plot_data_i += 1
-
-    return plot_data_i
 
 
 expected_no_line_style = {"color": "rgba(0,0,0,0)", "width": 0, "dash": None}
