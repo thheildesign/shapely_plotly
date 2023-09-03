@@ -6,6 +6,7 @@ Shapely to Plotly plots Shapely geometries via Plotly.
 * Clone this repo.
 * Add the repo's parent directory to your PYTHONPATH
 * Install Shapely (https://shapely.readthedocs.io/en/stable/manual.html) and Plotly (https://plotly.com/python/) normally.
+* Recommend installing Numpy (https://numpy.org/). Numpy is not needed by Shapely or Shapely to Plotly, however it is an excellent way to build geometry, and is used by the examples [../examples].
 * Import and use shapely normally.
 * Import and use Shapely to Plotly: `import shapeply_plotly`
 

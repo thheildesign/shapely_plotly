@@ -682,7 +682,7 @@ def plot_geometry_collection3d(sh_geo_col, data, style=DEFAULT, name=DEFAULT, le
     style, name, _, legend_group = resolve_info(sh_geo_col, style, name, legend_group, show_legend)
 
     # Get unique legend group ID
-    if legend_group is None:
+    if (legend_group is None) and (len(geoms) > 1):
         legend_group = unique_legend_group()
 
     for g in geoms:

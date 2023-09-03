@@ -132,8 +132,12 @@ def rnd_poly_coords(xoff, yoff, zoff, max_width=1.0, max_height=None, zheight=No
         ys.append(y)
 
     xs, ys = complete_poly_coords(xs, ys)
-    zs = rnd_zs(len(xs), zoff, max_width, zheight)
+    if rnd.random() < 0.1:
+        zs = None
+    else:
+        zs = rnd_zs(len(xs), zoff, max_width, zheight)
     return xs, ys, zs
+
 
 def z_exp(x, z):
     zexp = tuple(0 for i in range(len(x))) if z is None else tuple(z)
@@ -467,291 +471,294 @@ class RndPolySimple3d(RndGeometry3D):
         return "line"
 
 
-# class RndPolyComplex3d(RndGeometry3D):
-#     @staticmethod
-#     def rnd_shape_3d(xoff, yoff, zoff, width, height, zheight):
-#         """
-#         Produce a random shape of the given geometry.
-#         Also optionally produce prototype expected data.   This is typically the dimensions
-#         and the x/y coordinates, if known.
-#         Return (geom, proto_expected_data)
-#         """
-#         # Generate the hull
-#         while True:
-#             ext_x, ext_y = rnd_poly_coords(xoff, yoff, width, height)
-#             ext_xy = zip_xy(ext_x, ext_y)
-#             shell_p = shp.Polygon(shell=ext_xy)
-#             if shell_p.is_valid:
-#                 break
-#
-#         num_int = rnd.randrange(0, 10)
-#         if num_int > 0:
-#             # Build a list of hole positions.
-#             hoffsets = []
-#             for hx in range(3):
-#                 hxoff = xoff + hx * width * 0.3 + width * 0.1
-#                 for hy in range(3):
-#                     hyoff = yoff + hy * height * 0.3 + height * 0.1
-#                     hoffsets.append((hxoff, hyoff))
-#
-#             # Scramble it.
-#             rnd.shuffle(hoffsets)
-#
-#             holes = []
-#             for (hx, hy) in hoffsets[:num_int]:
-#                 hole_x, hole_y = rnd_poly_coords(hx, hy, width * 0.2, height * 0.2)
-#                 hole_p = shp.Polygon(shell=zip_xy(hole_x, hole_y))
-#                 if not hole_p.is_valid:
-#                     # Bad hole. skip.
-#                     continue
-#
-#                 if not shell_p.contains(hole_p):
-#                     # Hole not contained.
-#                     continue
-#
-#                 holes.append(zip_xy(hole_x, hole_y))
-#
-#             if len(holes) > 0:
-#                 shell_p = shp.Polygon(shell=ext_xy, holes=holes)
-#                 # assert shell_p.is_valid
-#
-#         return shell_p, None  # No proto-type expected data yet.  Depends on the style.
-#
-# #     def get_expected_data_3d(geom, proto_expected_data, final_style, final_name, plot_data, pd_start,
-#                              expected_data_list):
-#         """
-#         Compute expected_data for the plotted geometry, and add to expected_data list.
-#
-#         Add expected data to expect_data_list for the 1 to 3 plots created by drawing a polygon (geom).
-#         Unlike other geometries, polygons do not set dims and x/y as geometry creation time.
-#         For polygons, those values are complex and we wait until after the plots are made to create them.
-#
-#         geom - The geometry plotted
-#         proto_expected_data - from rnd_shape_3d.
-#         final_style - The style chosen during plotting.
-#         final_name - The name assigned during plotting.
-#         plot_data - The plots
-#         pd_start - The first plot in plot_data belonging to the geometry.
-#         expected_data - To be updated with needed expected data.
-#         """
-#
-#         if len(geom.interiors) > 0:
-#             # Has interioriors.  We have 1 to 3 plots.
-#             total_plots = 0
-#
-#             # 1) Fill plot:
-#             if final_style.fill_color is not None:
-#                 # For x,y I'm just going to take the polygon's x/ys for expected values.
-#                 # This is a non-test.  I could rebuild the x/y lists, but it would just be repeating the
-#                 # same code already in the polygon plot function.
-#                 fill_plot_data = plot_data[pd_start]
-#                 expect_data = {
-#                     "dims": "2d",
-#                     "x": tuple(fill_plot_data.x),
-#                     "y": tuple(fill_plot_data.y)
-#                 }
-#
-#                 assert len(fill_plot_data.x) == \
-#                        len(geom.exterior.xy[0]) + len(geom.interiors) + sum(len(i.xy[0]) for i in geom.interiors)
-#
-#                 add_normalized_style_info(expect_data, final_style, final_name, "poly_fill")
-#                 expected_data_list.append(expect_data)
-#                 total_plots += 1
-#
-#             # 2) Exterior plot.
-#             if (final_style.line_style is not None) or (final_style.vertex_style is not None):
-#                 ext = geom.exterior
-#                 ext_x, ext_y = ext.xy
-#                 expect_data = {
-#                     "dims": "2d",
-#                     "x": tuple(ext_x),
-#                     "y": tuple(ext_y)
-#                 }
-#                 add_normalized_style_info(expect_data, final_style, final_name, "line")
-#                 expected_data_list.append(expect_data)
-#                 total_plots += 1
-#
-#             # 3) Interiors plot.
-#             if (final_style.hole_line_style is not None) or (final_style.hole_vertex_style is not None):
-#                 # Again, we just take the plot's xy coordinates.
-#                 hole_plot_data = plot_data[pd_start + total_plots]
-#                 expect_data = {
-#                     "dims": "2d",
-#                     "x": tuple(hole_plot_data.x),
-#                     "y": tuple(hole_plot_data.y)
-#                 }
-#                 assert len(hole_plot_data.x) == \
-#                        len(geom.interiors) + sum(len(i.xy[0]) for i in geom.interiors) - 1
-#
-#                 add_normalized_style_info(expect_data, final_style, final_name, "hole")
-#                 expected_data_list.append(expect_data)
-#                 total_plots += 1
-#
-#         else:
-#             # No interiors.  Just the one plot, and we can build just a single expected value like normal.
-#             expect_data = {
-#                 "dims": "2d",
-#                 "x": tuple(c[0] for c in geom.exterior.coords),
-#                 "y": tuple(c[1] for c in geom.exterior.coords)
-#             }
-#             add_normalized_style_info(expect_data, final_style, final_name, "poly")
-#             expected_data_list.append(expect_data)
-#
-#         return
-#
-# #     def style_mode():
-#         return "poly"
-#
-#
-# class RndMultiPoly3d(RndGeometry3D):
-#     @staticmethod
-#     def rnd_shape_3d(xoff, yoff, zoff, width, height, zheight):
-#         """
-#         Produce a random shape of the given geometry.
-#         Also optionally produce prototype expected data.   This is typically the dimensions
-#         and the x/y coordinates, if known.
-#         Return (geom, proto_expected_data)
-#         """
-#
-#         # Produce 1 to 6 polygons in the multi-poly
-#         n = rnd.randrange(1, 6)
-#
-#         # Arrange in one or two rows of 1 to 3.
-#         if n > 3:
-#             pheight = height * 0.45
-#             ystep = height * 0.55
-#             nx = (n + 1) // 2
-#         else:
-#             nx = n
-#             pheight = height
-#             ystep = 0.0
-#
-#         pwidth = (1.0 - 0.1 * (nx - 1)) / nx
-#         xstep = pwidth + 0.1
-#         pwidth *= width
-#         xstep *= width
-#
-#         # Produce the polygons.
-#         geoms = []
-#         xpoff = xoff
-#         ypoff = yoff
-#         for i in range(n):
-#             poly, _ = RndPolyComplex2d.rnd_shape_3d(xpoff, ypoff, pwidth, pheight)
-#             geoms.append(poly)
-#             if i == (nx - 1):
-#                 xpoff = xoff
-#                 ypoff += ystep
-#             else:
-#                 xpoff += xstep
-#
-#         geom = shp.MultiPolygon(geoms)
-#         return geom, None  # No proto-type expected data yet.  Depends on the style.
-#
-# #     def get_expected_data_3d(geom, proto_expected_data, final_style, final_name, plot_data, pd_start,
-#                              expected_data_list):
-#         """
-#         Compute expected_data for the plotted geometry, and add to expected_data list.
-#
-#         Add expected data to expect_data_list for the 1 to 3 plots created by drawing a polygon (geom).
-#         Unlike other geometries, polygons do not set dims and x/y as geometry creation time.
-#         For polygons, those values are complex and we wait until after the plots are made to create them.
-#
-#         geom - The geometry plotted
-#         proto_expected_data - from rnd_shape_3d.
-#         final_style - The style chosen during plotting.
-#         final_name - The name assigned during plotting.
-#         plot_data - The plots
-#         pd_start - The first plot in plot_data belonging to the geometry.
-#         expected_data - To be updated with needed expected data.
-#         """
-#
-#         # Build expected style data for all the plots.  All use the same final_style
-#         for poly in geom.geoms:
-#             RndPolyComplex2d.get_expected_data_3d(poly, proto_expected_data, final_style, final_name, plot_data,
-#                                                   len(expected_data_list), expected_data_list)
-#         return
-#
-# #     def style_mode():
-#         return "poly"
-#
-#
-# class RndGeomCollection3d(RndGeometry3D):
-#     @staticmethod
-#     def rnd_shape_3d(xoff, yoff, zoff, width, height, zheight):
-#         """
-#         Produce a random shape of the given geometry.
-#         Also optionally produce prototype expected data.   This is typically the dimensions
-#         and the x/y coordinates, if known.
-#         Return (geom, proto_expected_data)
-#         """
-#
-#         return RndGeomCollection2d.__rnd_shape_3d(xoff, yoff, width, height, 3)
-#
-#     @staticmethod
-#     def __rnd_shape_3d(xoff, yoff, width, height, max_depth):
-#         n = rnd.randrange(1, 5)
-#         geoms = []
-#         protos = []
-#         if max_depth > 0:
-#             rnd_classes = rnd_geom_classes
-#         else:
-#             # Exclude geometry collection
-#             rnd_classes = rnd_geom_classes[:-1]
-#
-#         for i in range(n):
-#             rnd_class = rnd.choice(rnd_classes)
-#             if rnd_class is RndGeomCollection2d:
-#                 # Geometry collection needs the depth parameter to prevent run-away
-#                 geom, proto_expected_data = rnd_class.__rnd_shape_3d(xoff, yoff, width, height, max_depth - 1)
-#             else:
-#                 geom, proto_expected_data = rnd_class.rnd_shape_3d(xoff, yoff, width, height)
-#
-#             geoms.append(geom)
-#             protos.append((rnd_class, proto_expected_data))
-#
-#         geom = shp.GeometryCollection(geoms)
-#         return geom, protos
-#
-# #     def get_expected_data_3d(geom, proto_expected_data, final_style, final_name, plot_data, pd_start,
-#                              expected_data_list):
-#         """
-#         Compute expected_data for the plotted geometry, and add to expected_data list.
-#
-#         Add expected data to expect_data_list for the 1 to 3 plots created by drawing a polygon (geom).
-#         Unlike other geometries, polygons do not set dims and x/y as geometry creation time.
-#         For polygons, those values are complex and we wait until after the plots are made to create them.
-#
-#         geom - The geometry plotted
-#         proto_expected_data - from rnd_shape_3d.
-#         final_style - The style chosen during plotting.
-#         final_name - The name assigned during plotting.
-#         plot_data - The plots
-#         pd_start - The first plot in plot_data belonging to the geometry.
-#         expected_data - To be updated with needed expected data.
-#         """
-#
-#         # Build expected style data for all the plots.  All use the same final_style
-#         for geom, (rnd_class, geom_proto) in zip(geom.geoms, proto_expected_data):
-#             rnd_class.get_expected_data_3d(geom, geom_proto, final_style, final_name, plot_data,
-#                                            len(expected_data_list), expected_data_list)
-#
-#         return
-#
-# #     def style_mode():
-#         return "collection"
+class RndPolyComplex3d(RndGeometry3D):
+    @staticmethod
+    def rnd_shape_3d(xoff, yoff, zoff, width, height, zheight):
+        """
+        Produce a random shape of the given geometry.
+        Also optionally produce prototype expected data.   This is typically the dimensions
+        and the x/y coordinates, if known.
+        Return (geom, proto_expected_data)
+        """
+        # Generate the hull
+        while True:
+            ext_x, ext_y, ext_z = rnd_poly_coords(xoff, yoff, zoff, width, height, zheight)
+            ext_xyz = zip_xyz(ext_x, ext_y, ext_z)
+            shell_p = shp.Polygon(shell=ext_xyz)
+            if shell_p.is_valid:
+                break
+
+        num_int = rnd.randrange(0, 10)
+        if num_int > 0:
+            # Build a list of hole positions.
+            hoffsets = []
+            for hx in range(3):
+                hxoff = xoff + hx * width * 0.3 + width * 0.1
+                for hy in range(3):
+                    hyoff = yoff + hy * height * 0.3 + height * 0.1
+                    hoffsets.append((hxoff, hyoff))
+
+            # Scramble it.
+            rnd.shuffle(hoffsets)
+
+            holes = []
+            for (hx, hy) in hoffsets[:num_int]:
+                hole_x, hole_y, hole_z = rnd_poly_coords(hx, hy, zoff, width * 0.2, height * 0.2, zheight)
+                hole_p = shp.Polygon(shell=zip_xyz(hole_x, hole_y, hole_z))
+                if not hole_p.is_valid:
+                    # Bad hole. skip.
+                    continue
+
+                if not shell_p.contains(hole_p):
+                    # Hole not contained.
+                    continue
+
+                holes.append(zip_xyz(hole_x, hole_y, hole_z))
+
+            if len(holes) > 0:
+                shell_p = shp.Polygon(shell=ext_xyz, holes=holes)
+                # assert shell_p.is_valid
+
+        return shell_p, None  # No proto-type expected data yet.  Depends on the style.
+
+    @staticmethod
+    def get_expected_data_3d(geom, proto_expected_data, final_style, final_name, plot_data, pd_start,
+                             expected_data_list):
+        """
+        Compute expected_data for the plotted geometry, and add to expected_data list.
+
+        Add expected data to expect_data_list for the 1 to 3 plots created by drawing a polygon (geom).
+        Unlike other geometries, polygons do not set dims and x/y as geometry creation time.
+        For polygons, those values are complex and we wait until after the plots are made to create them.
+
+        geom - The geometry plotted
+        proto_expected_data - from rnd_shape_3d.
+        final_style - The style chosen during plotting.
+        final_name - The name assigned during plotting.
+        plot_data - The plots
+        pd_start - The first plot in plot_data belonging to the geometry.
+        expected_data - To be updated with needed expected data.
+        """
+
+        if len(geom.interiors) > 0:
+            # Has interioriors.  We have 1 to 3 plots.
+            total_plots = 0
+
+            # 1) Exterior plot.
+            if (final_style.line_style is not None) or (final_style.vertex_style is not None):
+                ext = geom.exterior
+                ext_x, ext_y = ext.xy
+                if ext.has_z:
+                    ext_z = tuple(c[2] for c in ext.coords)
+                else:
+                    ext_z = (0.0,) * len(ext_x)
+                expect_data = {
+                    "dims": "3d",
+                    "x": tuple(ext_x),
+                    "y": tuple(ext_y),
+                    "z": ext_z
+                }
+                add_normalized_style_info(expect_data, final_style, final_name, "line")
+                expected_data_list.append(expect_data)
+                total_plots += 1
+
+            # 2) Interior plots.
+            if (final_style.hole_line_style is not None) or (final_style.hole_vertex_style is not None):
+                for interior in geom.interiors:
+                    hole_x, hole_y = interior.xy
+                    if interior.has_z:
+                        hole_z = tuple(c[2] for c in interior.coords)
+                    else:
+                        hole_z = (0.0,)*len(hole_x)
+                    expect_data = {
+                        "dims": "3d",
+                        "x": tuple(hole_x),
+                        "y": tuple(hole_y),
+                        "z": hole_z
+                    }
+
+                    add_normalized_style_info(expect_data, final_style, final_name, "hole")
+                    expected_data_list.append(expect_data)
+                    total_plots += 1
+
+        else:
+            # No interiors.  Just the one plot, and we can build just a single expected value like normal.
+            ext = geom.exterior
+            ext_x, ext_y = ext.xy
+            if ext.has_z:
+                ext_z = tuple(c[2] for c in ext.coords)
+            else:
+                ext_z = (0.0,)*len(ext_x)
+            expect_data = {
+                "dims": "3d",
+                "x": tuple(ext_x),
+                "y": tuple(ext_y),
+                "z": ext_z
+            }
+            add_normalized_style_info(expect_data, final_style, final_name, "line")
+            expected_data_list.append(expect_data)
+
+        return
+
+    @staticmethod
+    def style_mode():
+        return "line"
 
 
-# rnd_geom_classes = [
-#     RndPoint3d,
-#     RndMultiPoint3d,
-#     RndLineString3d,
-#     RndLineRing3d,
-#     RndMultiLine3d,
-#     RndPolySimple3d,
-#     RndPolyComplex3d,
-#     RndMultiPoly3d,
-#     RndGeomCollection3d
-# ]
+class RndMultiPoly3d(RndGeometry3D):
+    @staticmethod
+    def rnd_shape_3d(xoff, yoff, zoff, width, height, zheight):
+        """
+        Produce a random shape of the given geometry.
+        Also optionally produce prototype expected data.   This is typically the dimensions
+        and the x/y coordinates, if known.
+        Return (geom, proto_expected_data)
+        """
+
+        # Produce 1 to 6 polygons in the multi-poly
+        n = rnd.randrange(1, 6)
+
+        # Arrange in one or two rows of 1 to 3.
+        if n > 3:
+            pheight = height * 0.45
+            ystep = height * 0.55
+            nx = (n + 1) // 2
+        else:
+            nx = n
+            pheight = height
+            ystep = 0.0
+
+        pwidth = (1.0 - 0.1 * (nx - 1)) / nx
+        xstep = pwidth + 0.1
+        pwidth *= width
+        xstep *= width
+
+        # Produce the polygons.
+        geoms = []
+        xpoff = xoff
+        ypoff = yoff
+        for i in range(n):
+            poly, _ = RndPolyComplex3d.rnd_shape_3d(xpoff, ypoff, zoff, pwidth, pheight, zheight)
+            geoms.append(poly)
+            if i == (nx - 1):
+                xpoff = xoff
+                ypoff += ystep
+            else:
+                xpoff += xstep
+
+        geom = shp.MultiPolygon(geoms)
+        return geom, None  # No proto-type expected data yet.  Depends on the style.
+
+    @staticmethod
+    def get_expected_data_3d(geom, proto_expected_data, final_style, final_name, plot_data, pd_start,
+                             expected_data_list):
+        """
+        Compute expected_data for the plotted geometry, and add to expected_data list.
+
+        Add expected data to expect_data_list for the 1 to 3 plots created by drawing a polygon (geom).
+        Unlike other geometries, polygons do not set dims and x/y as geometry creation time.
+        For polygons, those values are complex and we wait until after the plots are made to create them.
+
+        geom - The geometry plotted
+        proto_expected_data - from rnd_shape_3d.
+        final_style - The style chosen during plotting.
+        final_name - The name assigned during plotting.
+        plot_data - The plots
+        pd_start - The first plot in plot_data belonging to the geometry.
+        expected_data - To be updated with needed expected data.
+        """
+
+        # Build expected style data for all the plots.  All use the same final_style
+        for poly in geom.geoms:
+            RndPolyComplex3d.get_expected_data_3d(poly, proto_expected_data, final_style, final_name, plot_data,
+                                                  len(expected_data_list), expected_data_list)
+        return
+
+    @staticmethod
+    def style_mode():
+        return "line"
+
+
+class RndGeomCollection3d(RndGeometry3D):
+    @staticmethod
+    def rnd_shape_3d(xoff, yoff, zoff, width, height, zheight):
+        """
+        Produce a random shape of the given geometry.
+        Also optionally produce prototype expected data.   This is typically the dimensions
+        and the x/y coordinates, if known.
+        Return (geom, proto_expected_data)
+        """
+
+        return RndGeomCollection3d.__rnd_shape_3d(xoff, yoff, zoff, width, height, zheight, 3)
+
+    @staticmethod
+    def __rnd_shape_3d(xoff, yoff, zoff, width, height, zheight, max_depth):
+        n = rnd.randrange(1, 5)
+        geoms = []
+        protos = []
+        if max_depth > 0:
+            rnd_classes = rnd_geom_classes
+        else:
+            # Exclude geometry collection
+            rnd_classes = rnd_geom_classes[:-1]
+
+        for i in range(n):
+            rnd_class = rnd.choice(rnd_classes)
+            if rnd_class is RndGeomCollection3d:
+                # Geometry collection needs the depth parameter to prevent run-away
+                geom, proto_expected_data = rnd_class.__rnd_shape_3d(xoff, yoff,zoff, width, height, zheight,
+                                                                     max_depth - 1)
+            else:
+                geom, proto_expected_data = rnd_class.rnd_shape_3d(xoff, yoff, zoff, width, height, zheight)
+
+            geoms.append(geom)
+            protos.append((rnd_class, proto_expected_data))
+
+        geom = shp.GeometryCollection(geoms)
+        return geom, protos
+
+    @staticmethod
+    def get_expected_data_3d(geom, proto_expected_data, final_style, final_name, plot_data, pd_start,
+                             expected_data_list):
+        """
+        Compute expected_data for the plotted geometry, and add to expected_data list.
+
+        Add expected data to expect_data_list for the 1 to 3 plots created by drawing a polygon (geom).
+        Unlike other geometries, polygons do not set dims and x/y as geometry creation time.
+        For polygons, those values are complex and we wait until after the plots are made to create them.
+
+        geom - The geometry plotted
+        proto_expected_data - from rnd_shape_3d.
+        final_style - The style chosen during plotting.
+        final_name - The name assigned during plotting.
+        plot_data - The plots
+        pd_start - The first plot in plot_data belonging to the geometry.
+        expected_data - To be updated with needed expected data.
+        """
+
+        # Build expected style data for all the plots.  All use the same final_style
+        for geom, (rnd_class, geom_proto) in zip(geom.geoms, proto_expected_data):
+            rnd_class.get_expected_data_3d(geom, geom_proto, final_style, final_name, plot_data,
+                                           len(expected_data_list), expected_data_list)
+
+        return
+
+    @staticmethod
+    def style_mode():
+        return "collection"
+
+
+rnd_geom_classes = [
+    RndPoint3d,
+    RndMultiPoint3d,
+    RndLineString3d,
+    RndLineRing3d,
+    RndMultiLine3d,
+    RndPolySimple3d,
+    RndPolyComplex3d,
+    RndMultiPoly3d,
+    RndGeomCollection3d
+]
 
 
 def do_rnd_geom_plotting_3d(plot_data, expected_data_list, GeomClass, xoff, yoff, zoff, width=1.0, height=None, zheight=None):
