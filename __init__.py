@@ -20,7 +20,7 @@ The following shapely geometry objects may be plotted.
 Includes a Style system for controlling line styles, fill colors, marker styles and legends.
 
 """
-__version__ = "0.4.0"
+__version__ = "0.8.0"
 
 from .style import (
     Style,
