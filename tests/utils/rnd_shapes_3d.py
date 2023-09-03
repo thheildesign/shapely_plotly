@@ -36,19 +36,27 @@ def rnd_coords(xoff, yoff, zoff, width=1.0, height=None, zheight=None):
     l = rnd.randrange(10, 20)
     x = [rnd.uniform(xoff, xoff + width) for i in range(l)]
     y = [rnd.uniform(yoff, yoff + height) for i in range(l)]
-    z = rnd_zs(l, zoff, width, zheight)
+    if rnd.random() < 0.1:
+        z = None
+    else:
+        z = rnd_zs(l, zoff, width, zheight)
+
     return x, y, z
 
 
 def rnd_zs(l, zoff, width, zheight):
     if zheight is None:
         zheight = width / 5
-    z = [rnd.uniform(zoff, zoff + zheight) if rnd.random() > 0.1 else None for i in range(l)]
+    z = [rnd.uniform(zoff, zoff + zheight) for i in range(l)]
     return z
 
 
 def zip_xyz(x, y, z):
-    points = list(zip(x, y, z))
+    if z is None:
+        points = list(zip(x, y))
+    else:
+        points = list(zip(x, y, z))
+
     return points
 
 
@@ -123,6 +131,9 @@ def rnd_poly_coords(xoff, yoff, zoff, max_width=1.0, max_height=None, zheight=No
     zs = rnd_zs(len(xs), zoff, max_width, zheight)
     return xs, ys, zs
 
+def z_exp(x, z):
+    zexp = tuple(0 for i in range(len(x))) if z is None else tuple(z)
+    return zexp
 
 # -----------------------------------------------------------------
 # Random Shapely geometries
@@ -191,7 +202,7 @@ class RndPoint3d(RndGeometry3D):
         """
         Compute expected_data for the plotted geometry, and add to expected_data list.
         geom - The geometry plotted
-        proto_expected_data - from rnd_shape_2d.
+        proto_expected_data - from rnd_shape_3d.
         final_style - The style chosen during plotting.
         final_name - The name assigned during plotting.
         plot_data - The plots
@@ -206,138 +217,143 @@ class RndPoint3d(RndGeometry3D):
         return "point"
 
 
-# class RndMultiPoint2d(RndGeometry):
-#     def rnd_shape_2d(xoff, yoff, width, height):
-#         """
-#         Produce a random shape of the given geometry.
-#         Also optionally produce prototype expected data.   This is typically the dimensions
-#         and the x/y coordinates, if known.
-#         Return (geom, proto_expected_data)
-#         """
-#         x, y = rnd_coords(xoff, yoff, width, height)
-#         geom = shp.MultiPoint(zip_xy(x, y))
-#         proto_expected_data = dict(
-#             dims="2d",
-#             x=tuple(x),
-#             y=tuple(y)
-#         )
-#
-#         return geom, proto_expected_data
-#
-#     @abstractstaticmethod
-#     def get_expected_data_2d(geom, proto_expected_data, final_style, final_name, plot_data, pd_start,
-#                              expected_data_list):
-#         """
-#         Compute expected_data for the plotted geometry, and add to expected_data list.
-#         geom - The geometry plotted
-#         proto_expected_data - from rnd_shape_2d.
-#         final_style - The style chosen during plotting.
-#         final_name - The name assigned during plotting.
-#         plot_data - The plots
-#         pd_start - The first plot in plot_data belonging to the geometry.
-#         expected_data - To be updated with needed expected data.
-#         """
-#         add_normalized_style_info(proto_expected_data, final_style, final_name, "point")
-#         expected_data_list.append(proto_expected_data)
-#         return
-#
-#     @abstractstaticmethod
-#     def style_mode():
-#         return "point"
-#
-#
-# class RndLineString2d(RndGeometry):
-#     def rnd_shape_2d(xoff, yoff, width, height):
-#         """
-#         Produce a random shape of the given geometry.
-#         Also optionally produce prototype expected data.   This is typically the dimensions
-#         and the x/y coordinates, if known.
-#         Return (geom, proto_expected_data)
-#         """
-#         x, y = rnd_coords(xoff, yoff, width, height)
-#         geom = shp.LineString(zip_xy(x, y))
-#         proto_expected_data = dict(
-#             dims="2d",
-#             x=tuple(x),
-#             y=tuple(y)
-#         )
-#
-#         return geom, proto_expected_data
-#
-#     @abstractstaticmethod
-#     def get_expected_data_2d(geom, proto_expected_data, final_style, final_name, plot_data, pd_start,
-#                              expected_data_list):
-#         """
-#         Compute expected_data for the plotted geometry, and add to expected_data list.
-#         geom - The geometry plotted
-#         proto_expected_data - from rnd_shape_2d.
-#         final_style - The style chosen during plotting.
-#         final_name - The name assigned during plotting.
-#         plot_data - The plots
-#         pd_start - The first plot in plot_data belonging to the geometry.
-#         expected_data - To be updated with needed expected data.
-#         """
-#         add_normalized_style_info(proto_expected_data, final_style, final_name, "line")
-#         expected_data_list.append(proto_expected_data)
-#         return
-#
-#     @abstractstaticmethod
-#     def style_mode():
-#         return "line"
-#
-#
-# class RndLineRing2d(RndGeometry):
-#     def rnd_shape_2d(xoff, yoff, width, height):
-#         """
-#         Produce a random shape of the given geometry.
-#         Also optionally produce prototype expected data.   This is typically the dimensions
-#         and the x/y coordinates, if known.
-#         Return (geom, proto_expected_data)
-#         """
-#         x, y = rnd_coords(xoff, yoff, width, height)
-#         geom = shp.LinearRing(zip_xy(x, y))
-#
-#         if (x[0] != x[-1]) or (y[0] != y[-1]):
-#             # Add closing point.
-#             x = tuple(x) + (x[0],)
-#             y = tuple(y) + (y[0],)
-#         else:
-#             # Already closed
-#             x = tuple(x)
-#             y = tuple(y)
-#
-#         proto_expected_data = dict(
-#             dims="2d",
-#             x=x,
-#             y=y
-#         )
-#
-#         return geom, proto_expected_data
-#
-#     @abstractstaticmethod
-#     def get_expected_data_2d(geom, proto_expected_data, final_style, final_name, plot_data, pd_start,
-#                              expected_data_list):
-#         """
-#         Compute expected_data for the plotted geometry, and add to expected_data list.
-#         geom - The geometry plotted
-#         proto_expected_data - from rnd_shape_2d.
-#         final_style - The style chosen during plotting.
-#         final_name - The name assigned during plotting.
-#         plot_data - The plots
-#         pd_start - The first plot in plot_data belonging to the geometry.
-#         expected_data - To be updated with needed expected data.
-#         """
-#         add_normalized_style_info(proto_expected_data, final_style, final_name, "line")
-#         expected_data_list.append(proto_expected_data)
-#         return
-#
-#     @abstractstaticmethod
-#     def style_mode():
-#         return "line"
-#
-#
-# class RndMultiLine2d(RndGeometry):
-#     def rnd_shape_2d(xoff, yoff, width, height):
+class RndMultiPoint3d(RndGeometry3D):
+    def rnd_shape_3d(xoff, yoff, zoff, width, height, zheight):
+        """
+        Produce a random shape of the given geometry.
+        Also optionally produce prototype expected data.   This is typically the dimensions
+        and the x/y coordinates, if known.
+        Return (geom, proto_expected_data)
+        """
+        x, y, z = rnd_coords(xoff, yoff, zoff, width, height, zheight)
+        geom = shp.MultiPoint(zip_xyz(x, y, z))
+
+        proto_expected_data = dict(
+            dims="3d",
+            x=tuple(x),
+            y=tuple(y),
+            z=z_exp(x, z)
+        )
+
+        return geom, proto_expected_data
+
+    def get_expected_data_3d(geom, proto_expected_data, final_style, final_name, plot_data, pd_start,
+                             expected_data_list):
+        """
+        Compute expected_data for the plotted geometry, and add to expected_data list.
+        geom - The geometry plotted
+        proto_expected_data - from rnd_shape_3d.
+        final_style - The style chosen during plotting.
+        final_name - The name assigned during plotting.
+        plot_data - The plots
+        pd_start - The first plot in plot_data belonging to the geometry.
+        expected_data - To be updated with needed expected data.
+        """
+        add_normalized_style_info(proto_expected_data, final_style, final_name, "point")
+        expected_data_list.append(proto_expected_data)
+        return
+
+    def style_mode():
+        return "point"
+
+
+class RndLineString3d(RndGeometry3D):
+    def rnd_shape_3d(xoff, yoff, zoff, width, height, zheight):
+        """
+        Produce a random shape of the given geometry.
+        Also optionally produce prototype expected data.   This is typically the dimensions
+        and the x/y coordinates, if known.
+        Return (geom, proto_expected_data)
+        """
+        x, y, z = rnd_coords(xoff, yoff, width, height)
+        geom = shp.LineString(zip_xyz(x, y, z))
+
+        proto_expected_data = dict(
+            dims="3d",
+            x=tuple(x),
+            y=tuple(y),
+            z=z_exp(x, z)
+        )
+
+        return geom, proto_expected_data
+
+    @abstractstaticmethod
+    def get_expected_data_3d(geom, proto_expected_data, final_style, final_name, plot_data, pd_start,
+                             expected_data_list):
+        """
+        Compute expected_data for the plotted geometry, and add to expected_data list.
+        geom - The geometry plotted
+        proto_expected_data - from rnd_shape_3d.
+        final_style - The style chosen during plotting.
+        final_name - The name assigned during plotting.
+        plot_data - The plots
+        pd_start - The first plot in plot_data belonging to the geometry.
+        expected_data - To be updated with needed expected data.
+        """
+        add_normalized_style_info(proto_expected_data, final_style, final_name, "line")
+        expected_data_list.append(proto_expected_data)
+        return
+
+    @abstractstaticmethod
+    def style_mode():
+        return "line"
+
+
+class RndLineRing3d(RndGeometry3D):
+    def rnd_shape_3d(xoff, yoff, zoff, width, height, zheight):
+        """
+        Produce a random shape of the given geometry.
+        Also optionally produce prototype expected data.   This is typically the dimensions
+        and the x/y coordinates, if known.
+        Return (geom, proto_expected_data)
+        """
+        x, y, z = rnd_coords(xoff, yoff, width, height)
+        geom = shp.LinearRing(zip_xyz(x, y, z))
+
+        if (x[0] != x[-1]) or (y[0] != y[-1]):
+            # Add closing point.
+            x = tuple(x) + (x[0],)
+            y = tuple(y) + (y[0],)
+            if z is not None:
+                z = tuple(z) + (z[0],)
+        else:
+            # Already closed
+            x = tuple(x)
+            y = tuple(y)
+
+        proto_expected_data = dict(
+            dims="3d",
+            x=x,
+            y=y,
+            z=z_exp(x, z)
+        )
+
+        return geom, proto_expected_data
+
+    @abstractstaticmethod
+    def get_expected_data_3d(geom, proto_expected_data, final_style, final_name, plot_data, pd_start,
+                             expected_data_list):
+        """
+        Compute expected_data for the plotted geometry, and add to expected_data list.
+        geom - The geometry plotted
+        proto_expected_data - from rnd_shape_3d.
+        final_style - The style chosen during plotting.
+        final_name - The name assigned during plotting.
+        plot_data - The plots
+        pd_start - The first plot in plot_data belonging to the geometry.
+        expected_data - To be updated with needed expected data.
+        """
+        add_normalized_style_info(proto_expected_data, final_style, final_name, "line")
+        expected_data_list.append(proto_expected_data)
+        return
+
+    @abstractstaticmethod
+    def style_mode():
+        return "line"
+
+
+# class RndMultiLine3d(RndGeometry3D):
+#     def rnd_shape_3d(xoff, yoff, zoff, width, height, zheight):
 #         """
 #         Produce a random shape of the given geometry.
 #         Also optionally produce prototype expected data.   This is typically the dimensions
@@ -349,8 +365,8 @@ class RndPoint3d(RndGeometry3D):
 #         xys = [None] * n
 #         ex, ey = [], []
 #         for i in range(n):
-#             x, y = rnd_coords(xoff + (width + 1) * i, yoff, width, height)
-#             xys[i] = zip_xy(x, y)
+#             x, y, z = rnd_coords(xoff + (width + 1) * i, yoff, width, height)
+#             xys[i] = zip_xyz(x, y, z)
 #             if i > 0:
 #                 ex.append(None)
 #                 ey.append(None)
@@ -360,7 +376,7 @@ class RndPoint3d(RndGeometry3D):
 #         geom = shp.MultiLineString(xys)
 #
 #         proto_expected_data = dict(
-#             dims="2d",
+#             dims="3d",
 #             x=tuple(ex),
 #             y=tuple(ey)
 #         )
@@ -368,12 +384,12 @@ class RndPoint3d(RndGeometry3D):
 #         return geom, proto_expected_data
 #
 #     @abstractstaticmethod
-#     def get_expected_data_2d(geom, proto_expected_data, final_style, final_name, plot_data, pd_start,
+#     def get_expected_data_3d(geom, proto_expected_data, final_style, final_name, plot_data, pd_start,
 #                              expected_data_list):
 #         """
 #         Compute expected_data for the plotted geometry, and add to expected_data list.
 #         geom - The geometry plotted
-#         proto_expected_data - from rnd_shape_2d.
+#         proto_expected_data - from rnd_shape_3d.
 #         final_style - The style chosen during plotting.
 #         final_name - The name assigned during plotting.
 #         plot_data - The plots
@@ -389,8 +405,8 @@ class RndPoint3d(RndGeometry3D):
 #         return "line"
 #
 #
-# class RndPolySimple2d(RndGeometry):
-#     def rnd_shape_2d(xoff, yoff, width, height):
+# class RndPolySimple3d(RndGeometry3D):
+#     def rnd_shape_3d(xoff, yoff, zoff, width, height, zheight):
 #         """
 #         Produce a random shape of the given geometry.
 #         Also optionally produce prototype expected data.   This is typically the dimensions
@@ -402,7 +418,7 @@ class RndPoint3d(RndGeometry3D):
 #         else:
 #             x, y = rnd_poly_coords(xoff, yoff, width, height)
 #
-#         geom = shp.Polygon(shell=zip_xy(x, y))
+#         geom = shp.Polygon(shell=zip_xyz(x, y, z))
 #
 #         if (x[0] != x[-1]) or (y[0] != y[-1]):
 #             # Add closing point.
@@ -414,7 +430,7 @@ class RndPoint3d(RndGeometry3D):
 #             y = tuple(y)
 #
 #         proto_expected_data = dict(
-#             dims="2d",
+#             dims="3d",
 #             x=x,
 #             y=y
 #         )
@@ -422,7 +438,7 @@ class RndPoint3d(RndGeometry3D):
 #         return geom, proto_expected_data
 #
 #     @abstractstaticmethod
-#     def get_expected_data_2d(geom, proto_expected_data, final_style, final_name, plot_data, pd_start,
+#     def get_expected_data_3d(geom, proto_expected_data, final_style, final_name, plot_data, pd_start,
 #                              expected_data_list):
 #         add_normalized_style_info(proto_expected_data, final_style, final_name, "poly")
 #         expected_data_list.append(proto_expected_data)
@@ -434,8 +450,8 @@ class RndPoint3d(RndGeometry3D):
 #         return "poly"
 #
 #
-# class RndPolyComplex2d(RndGeometry):
-#     def rnd_shape_2d(xoff, yoff, width, height):
+# class RndPolyComplex3d(RndGeometry3D):
+#     def rnd_shape_3d(xoff, yoff, zoff, width, height, zheight):
 #         """
 #         Produce a random shape of the given geometry.
 #         Also optionally produce prototype expected data.   This is typically the dimensions
@@ -484,7 +500,7 @@ class RndPoint3d(RndGeometry3D):
 #         return shell_p, None  # No proto-type expected data yet.  Depends on the style.
 #
 #     @abstractstaticmethod
-#     def get_expected_data_2d(geom, proto_expected_data, final_style, final_name, plot_data, pd_start,
+#     def get_expected_data_3d(geom, proto_expected_data, final_style, final_name, plot_data, pd_start,
 #                              expected_data_list):
 #         """
 #         Compute expected_data for the plotted geometry, and add to expected_data list.
@@ -494,7 +510,7 @@ class RndPoint3d(RndGeometry3D):
 #         For polygons, those values are complex and we wait until after the plots are made to create them.
 #
 #         geom - The geometry plotted
-#         proto_expected_data - from rnd_shape_2d.
+#         proto_expected_data - from rnd_shape_3d.
 #         final_style - The style chosen during plotting.
 #         final_name - The name assigned during plotting.
 #         plot_data - The plots
@@ -571,8 +587,8 @@ class RndPoint3d(RndGeometry3D):
 #         return "poly"
 #
 #
-# class RndMultiPoly2d(RndGeometry):
-#     def rnd_shape_2d(xoff, yoff, width, height):
+# class RndMultiPoly3d(RndGeometry3D):
+#     def rnd_shape_3d(xoff, yoff, zoff, width, height, zheight):
 #         """
 #         Produce a random shape of the given geometry.
 #         Also optionally produce prototype expected data.   This is typically the dimensions
@@ -603,7 +619,7 @@ class RndPoint3d(RndGeometry3D):
 #         xpoff = xoff
 #         ypoff = yoff
 #         for i in range(n):
-#             poly, _ = RndPolyComplex2d.rnd_shape_2d(xpoff, ypoff, pwidth, pheight)
+#             poly, _ = RndPolyComplex2d.rnd_shape_3d(xpoff, ypoff, pwidth, pheight)
 #             geoms.append(poly)
 #             if i == (nx - 1):
 #                 xpoff = xoff
@@ -615,7 +631,7 @@ class RndPoint3d(RndGeometry3D):
 #         return geom, None  # No proto-type expected data yet.  Depends on the style.
 #
 #     @abstractstaticmethod
-#     def get_expected_data_2d(geom, proto_expected_data, final_style, final_name, plot_data, pd_start,
+#     def get_expected_data_3d(geom, proto_expected_data, final_style, final_name, plot_data, pd_start,
 #                              expected_data_list):
 #         """
 #         Compute expected_data for the plotted geometry, and add to expected_data list.
@@ -625,7 +641,7 @@ class RndPoint3d(RndGeometry3D):
 #         For polygons, those values are complex and we wait until after the plots are made to create them.
 #
 #         geom - The geometry plotted
-#         proto_expected_data - from rnd_shape_2d.
+#         proto_expected_data - from rnd_shape_3d.
 #         final_style - The style chosen during plotting.
 #         final_name - The name assigned during plotting.
 #         plot_data - The plots
@@ -635,7 +651,7 @@ class RndPoint3d(RndGeometry3D):
 #
 #         # Build expected style data for all the plots.  All use the same final_style
 #         for poly in geom.geoms:
-#             RndPolyComplex2d.get_expected_data_2d(poly, proto_expected_data, final_style, final_name, plot_data,
+#             RndPolyComplex2d.get_expected_data_3d(poly, proto_expected_data, final_style, final_name, plot_data,
 #                                                   len(expected_data_list), expected_data_list)
 #         return
 #
@@ -644,8 +660,8 @@ class RndPoint3d(RndGeometry3D):
 #         return "poly"
 #
 #
-# class RndGeomCollection2d(RndGeometry):
-#     def rnd_shape_2d(xoff, yoff, width, height):
+# class RndGeomCollection3d(RndGeometry3D):
+#     def rnd_shape_3d(xoff, yoff, zoff, width, height, zheight):
 #         """
 #         Produce a random shape of the given geometry.
 #         Also optionally produce prototype expected data.   This is typically the dimensions
@@ -653,10 +669,10 @@ class RndPoint3d(RndGeometry3D):
 #         Return (geom, proto_expected_data)
 #         """
 #
-#         return RndGeomCollection2d.__rnd_shape_2d(xoff, yoff, width, height, 3)
+#         return RndGeomCollection2d.__rnd_shape_3d(xoff, yoff, width, height, 3)
 #
 #     @staticmethod
-#     def __rnd_shape_2d(xoff, yoff, width, height, max_depth):
+#     def __rnd_shape_3d(xoff, yoff, width, height, max_depth):
 #         n = rnd.randrange(1, 5)
 #         geoms = []
 #         protos = []
@@ -670,9 +686,9 @@ class RndPoint3d(RndGeometry3D):
 #             rnd_class = rnd.choice(rnd_classes)
 #             if rnd_class is RndGeomCollection2d:
 #                 # Geometry collection needs the depth parameter to prevent run-away
-#                 geom, proto_expected_data = rnd_class.__rnd_shape_2d(xoff, yoff, width, height, max_depth - 1)
+#                 geom, proto_expected_data = rnd_class.__rnd_shape_3d(xoff, yoff, width, height, max_depth - 1)
 #             else:
-#                 geom, proto_expected_data = rnd_class.rnd_shape_2d(xoff, yoff, width, height)
+#                 geom, proto_expected_data = rnd_class.rnd_shape_3d(xoff, yoff, width, height)
 #
 #             geoms.append(geom)
 #             protos.append((rnd_class, proto_expected_data))
@@ -681,7 +697,7 @@ class RndPoint3d(RndGeometry3D):
 #         return geom, protos
 #
 #     @abstractstaticmethod
-#     def get_expected_data_2d(geom, proto_expected_data, final_style, final_name, plot_data, pd_start,
+#     def get_expected_data_3d(geom, proto_expected_data, final_style, final_name, plot_data, pd_start,
 #                              expected_data_list):
 #         """
 #         Compute expected_data for the plotted geometry, and add to expected_data list.
@@ -691,7 +707,7 @@ class RndPoint3d(RndGeometry3D):
 #         For polygons, those values are complex and we wait until after the plots are made to create them.
 #
 #         geom - The geometry plotted
-#         proto_expected_data - from rnd_shape_2d.
+#         proto_expected_data - from rnd_shape_3d.
 #         final_style - The style chosen during plotting.
 #         final_name - The name assigned during plotting.
 #         plot_data - The plots
@@ -701,7 +717,7 @@ class RndPoint3d(RndGeometry3D):
 #
 #         # Build expected style data for all the plots.  All use the same final_style
 #         for geom, (rnd_class, geom_proto) in zip(geom.geoms, proto_expected_data):
-#             rnd_class.get_expected_data_2d(geom, geom_proto, final_style, final_name, plot_data,
+#             rnd_class.get_expected_data_3d(geom, geom_proto, final_style, final_name, plot_data,
 #                                            len(expected_data_list), expected_data_list)
 #
 #         return
@@ -771,7 +787,20 @@ def do_test_geom_plot3d(test_num, show, RndGeomClass, test_name):
     Generic self-checking random test for many geometries - 2D.  One random test.
     """
     test_start, test_end = start_end_id(test_num, 100, 200)
+    num_test = test_end - test_start
+    if num_test >= 1000:
+        h1 = num_test // 7
+        heartbeat = 10
+        while heartbeat*10 < h1:
+            heartbeat*=10
+
+    else:
+        heartbeat = None
+
     for test_num in range(test_start, test_end):
+        if (heartbeat is not None) and (test_num % heartbeat) == 0:
+            print(f"Test {test_num}")
+
         rnd.seed(test_num)
 
         plot_data = []

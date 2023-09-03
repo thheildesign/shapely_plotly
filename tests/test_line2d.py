@@ -1,5 +1,5 @@
 """
-Check Point 2D plotting.
+Check Line 2D plotting.
 """
 
 from shapely_plotly.tests.utils.run_main import run_main, TDef

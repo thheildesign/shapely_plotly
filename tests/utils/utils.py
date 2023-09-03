@@ -64,6 +64,12 @@ def normalize_plot_obj(plot_obj):
     for field in norm_fields:
         d[field] = getattr(plot_obj, field)
 
+    if not is_3d:
+        # Polygons will sometimes be labled as fill toself even when there is no fill color.
+        # In this case we ignore it, because filling with no fill color will not fill.  So we normalize it to None
+        fill = plot_obj.fill
+        d["fill"] = None if (plot_obj.fillcolor is None) else fill
+
     # Normalize line and marker styles to dictionaries
     mode = d["mode"]
     need_line = "line" in mode
