@@ -35,7 +35,7 @@ Other examples are included in the [../examples](../examples) directory:
 
 * [example_styles2d.py](../examples/example_styles2d.py) - Using styles on 2D geometry.
 * [example_styles3d.py](../examples/example_styles3d.py) - Using styles on 3D geometry.
-* [example_collecxtion_styles.py](../examples/example_collecxtion_styles.py) - Using styles on on collections, 2D and 3D.
+* [example_collection_styles.py](../examples/example_collection_styles.py) - Using styles on on collections, 2D and 3D.
 * [planet_3d.py](../examples/planet_3d.py) - Fun 3D plannet example.  Uses Numpy for geometry production.
 * [splotches.py](../examples/splotches.py) - Fun 2D example.  Uses Numpy and Shapely for geometry production. 
 

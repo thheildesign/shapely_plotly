@@ -28,7 +28,7 @@ At least Shapely 2.0 is required.
 * Clone this repo.
 * Add the repo's parent directory to your PYTHONPATH
 * Install Shapely (https://shapely.readthedocs.io/en/stable/manual.html) and Plotly (https://plotly.com/python/) normally.
-* Recommend installing Numpy (https://numpy.org/). Numpy is not needed by Shapely or Shapely to Plotly.  However it is an excellent way to build geometry, and is used by the examples [../examples](../examples).
+* Recommend installing Numpy (https://numpy.org/). Numpy is not needed by Shapely or Shapely to Plotly.  However it is an excellent way to build geometry, and is used by some of the examples [./examples](examples).
 * Import and use shapely normally.
 * Import and use Shapely to Plotly: `import shapeply_plotly`
 
