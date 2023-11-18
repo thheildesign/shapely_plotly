@@ -35,20 +35,18 @@ def rnd_collection(name, x_off, y_off):
     return collection
 
 
-data = []
+plot_data2d = []
 for i in range(4):
     c = rnd_collection(f"Collection {i}", i*2, 0)
-    c.plotly_draw2d(data)
+    c.plotly_draw2d(plot_data2d)
 
-fig = graph.Figure(data=data)
-fig.update_yaxes(scaleanchor="x", scaleratio=1)  # This forces plotly to keep the aspect ratio correct.
-fig.show()
+shapely_plotly.show2d(plot_data2d)
 
-data = []
+plot_data3d = []
 for i in range(4):
     c = rnd_collection(f"Collection {i}", i * 2, 0)
-    c.plotly_draw3d(data)
+    c.plotly_draw3d(plot_data3d)
 
-shapely_plotly.show3d(data)
+shapely_plotly.show3d(plot_data3d)
 
 print("Done")

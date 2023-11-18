@@ -2,17 +2,43 @@
 
 Shapely to Plotly plots Shapely geometries via Plotly.
 
+## Compatibility
+Shapely to Plotly should be robust across a wide range of current platforms.
+
+Shapely to Plotly runs on Linux and Windows.  
+It has been tested on Windows 11, and Ubuntu 22.04.2 LTS via WSL 2.0.
+
+Testing has been performed on Python 3.9 and 3.11.  
+
+At least Shapely 2.0 is required.
+
 ## Installation
 * Clone this repo.
 * Add the repo's parent directory to your PYTHONPATH
 * Install Shapely (https://shapely.readthedocs.io/en/stable/manual.html) and Plotly (https://plotly.com/python/) normally.
-* Recommend installing Numpy (https://numpy.org/). Numpy is not needed by Shapely or Shapely to Plotly, however it is an excellent way to build geometry, and is used by the examples [../examples].
+* Recommend installing Numpy (https://numpy.org/). Numpy is not needed by Shapely or Shapely to Plotly.  However it is an excellent way to build geometry, and is used by the examples [../examples](../examples).
 * Import and use shapely normally.
 * Import and use Shapely to Plotly: `import shapeply_plotly`
 
+## Regression Testing
+
+Regression testing is based on Pytest.  See [testing.md](testing.md) for details.
+
+
 ## Getting Started
 
-See [example1.py](example1.py) for the complete code.
+### Examples
+
+See [example1.py](example1.py) for the complete code described below.
+
+Other examples are included in the [../examples](../examples) directory:
+
+* [example_styles2d.py](../examples/example_styles2d.py) - Using styles on 2D geometry.
+* [example_styles3d.py](../examples/example_styles3d.py) - Using styles on 3D geometry.
+* [example_collecxtion_styles.py](../examples/example_collecxtion_styles.py) - Using styles on on collections, 2D and 3D.
+* [planet_3d.py](../examples/planet_3d.py) - Fun 3D plannet example.  Uses Numpy for geometry production.
+* [splotches.py](../examples/splotches.py) - Fun 2D example.  Uses Numpy and Shapely for geometry production. 
+
 
 ### 1) Import shapely_plotly and shapely
 
